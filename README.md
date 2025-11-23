@@ -7,7 +7,7 @@ I hope you will like this little helper app and that it will help you to continu
 
 I love you Mom!
 
-<img alt="Lotto" src="lotto_grid.png" width="200"/>
+<img alt="Lotto" src="app/src/test/resources/lotto_grid.png" width="200"/>
 
 ---
 

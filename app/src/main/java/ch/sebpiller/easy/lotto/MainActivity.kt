@@ -3,11 +3,14 @@ package ch.sebpiller.easy.lotto
 import android.Manifest
 import android.content.ContentValues
 import android.content.Context
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -26,10 +29,16 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import ch.sebpiller.easy.lotto.processing.ImageReader
 import ch.sebpiller.easy.lotto.ui.theme.EasyLottoTheme
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
+import com.google.mlkit.vision.common.InputImage
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -37,6 +46,7 @@ import java.util.concurrent.Executor
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        Log.d("MainActivity", "onCreate called")
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
@@ -52,6 +62,7 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun CameraCaptureScreen() {
+    Log.d("CameraCaptureScreen", "Composable initialized")
     val context = LocalContext.current
     val cameraPermission = rememberPermissionState(Manifest.permission.CAMERA)
     var lastSavedUri by remember { mutableStateOf<Uri?>(null) }
@@ -66,8 +77,10 @@ fun CameraCaptureScreen() {
                 cameraPermission.launchPermissionRequest()
             }
         } else {
+            val scope = rememberCoroutineScope()
+
             val controller = remember { LifecycleCameraController(context) }
-            val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+            val lifecycleOwner = LocalLifecycleOwner.current
             LaunchedEffect(lifecycleOwner) {
                 controller.imageCaptureMode = ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY
                 controller.bindToLifecycle(lifecycleOwner)
@@ -107,20 +120,19 @@ fun CameraCaptureScreen() {
                             lastSavedUri = result
                             val msg = if (result != null) {
                                 "Saved: $result"
-                            } else "Capture failed";
+                            } else "Capture failed"
 
-                            // FIXME
-//                            LaunchedEffect(msg) {
-//                                snackbarHostState.showSnackbar(msg)
-//                            }
+                            scope.launch {
+                                snackbarHostState.showSnackbar(msg)
+                            }
                         }
                     }) {
                         Text("Take photo")
                     }
 
                     lastSavedUri?.let { uri ->
-                        OutlinedButton(onClick = { shareImage(context, uri) }) {
-                            Text("Share last")
+                        OutlinedButton(onClick = { processLast(context, uri) }) {
+                            Text("Import")
                         }
                     }
                 }
@@ -150,6 +162,7 @@ private fun captureAndSavePhoto(
     executor: Executor,
     onResult: (Uri?) -> Unit
 ) {
+    Log.d("CapturePhoto", "Starting photo capture")
     val name = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(System.currentTimeMillis())
     val outputOptions = when {
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> {
@@ -158,12 +171,14 @@ private fun captureAndSavePhoto(
                 put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
                 put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/EasyLotto")
             }
-            val uri = context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
-            if (uri == null) {
-                onResult(null)
-                return
-            }
-            ImageCapture.OutputFileOptions.Builder(context.contentResolver, uri, ContentValues()).build()
+
+
+            // Utilisation du constructeur qui prend la Collection URI et laisse CameraX gérer l'insertion
+            ImageCapture.OutputFileOptions.Builder(
+                context.contentResolver,
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                contentValues
+            ).build()
         }
 
         else -> {
@@ -175,6 +190,7 @@ private fun captureAndSavePhoto(
 
     controller.takePicture(outputOptions, executor, object : ImageCapture.OnImageSavedCallback {
         override fun onError(exception: ImageCaptureException) {
+            Log.e("CapturePhoto", "Error during photo capture", exception)
             onResult(null)
         }
 
@@ -191,7 +207,7 @@ private fun ImageCapture.OutputFileOptions.savedUriFromLegacy(context: Context):
         val javaClass = this.javaClass
         val fileField = javaClass.getDeclaredField("mFile")
         fileField.isAccessible = true
-        val file = fileField.get(this) as? File ?: return null
+        val file = fileField[this] as? File ?: return null
         // Add to MediaStore so it appears in gallery
         val values = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, file.name)
@@ -204,11 +220,42 @@ private fun ImageCapture.OutputFileOptions.savedUriFromLegacy(context: Context):
     }
 }
 
-private fun shareImage(context: Context, uri: Uri) {
-    val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-        type = "image/*"
-        putExtra(android.content.Intent.EXTRA_STREAM, uri)
-        addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+private fun processLast(context: Context, uri: Uri) {
+    Log.d("ProcessLast", "Processing: $uri")
+    CoroutineScope(Dispatchers.IO).launch {
+        try {
+            val reader = ImageReader()
+            val bitmap = BitmapFactory.decodeStream(context.contentResolver.openInputStream(uri))
+            val image = InputImage.fromBitmap(bitmap, 0)
+
+            val detected = reader.read(image)
+
+            // Sort by row then column for stable output
+            val sorted = detected.sortedWith(compareBy({ it.position.row }, { it.position.col }))
+
+            for (d in sorted) {
+                Log.i(
+                    "LottoExtract",
+                    "value=${d.value} at row=${d.position.row}, col=${d.position.col}, box=${d.bbox}"
+                )
+            }
+
+            val summary = if (sorted.isEmpty()) {
+                "No numbers detected"
+            } else {
+                val items = sorted.joinToString { "${it.value}@(${it.position.row},${it.position.col})" }
+                "Detected ${sorted.size}: $items"
+            }
+
+            // Post small UI feedback on main thread
+            kotlinx.coroutines.withContext(Dispatchers.Main) {
+                Toast.makeText(context, summary, Toast.LENGTH_LONG).show()
+            }
+        } catch (t: Throwable) {
+            Log.e("ProcessLast", "Failed to process image", t)
+            kotlinx.coroutines.withContext(Dispatchers.Main) {
+                Toast.makeText(context, "Processing failed: ${t.message}", Toast.LENGTH_LONG).show()
+            }
+        }
     }
-    context.startActivity(android.content.Intent.createChooser(shareIntent, "Share image"))
 }
