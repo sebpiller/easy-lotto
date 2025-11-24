@@ -1,26 +1,22 @@
 package ch.sebpiller.easy.lotto.processing
 
-import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Point
 import android.graphics.Rect
-import android.net.Uri
+import android.graphics.Bitmap
 import android.util.Log
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.Text
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions.DEFAULT_OPTIONS
 import kotlinx.coroutines.suspendCancellableCoroutine
-import java.io.InputStream
 import kotlin.coroutines.resume
 import kotlin.math.floor
+import org.opencv.android.Utils
+import org.opencv.core.Mat
+import org.opencv.core.MatOfPoint
+import org.opencv.core.MatOfPoint2f
+import org.opencv.imgproc.Imgproc
 
-/**
- * Reads a lotto grid image and extracts the 15 large numbers and their positions.
- * The grid is 9 columns by 3 rows. We map each detected number's bounding box center
- * to a cell in this grid.
- */
 class ImageReader {
 
     data class GridPosition(val row: Int, val col: Int) {
@@ -36,37 +32,30 @@ class ImageReader {
         val bbox: Rect
     )
 
-    /**
-     * Process the image pointed by [uri] and return the list of detected numbers with their grid positions.
-     */
     suspend fun read(image: InputImage): List<DetectedNumber> {
         val visionText = recognize(image) ?: return emptyList()
 
         val results = mutableListOf<DetectedNumber>()
 
-        // Divide the image space
-        val cellWidth = image.width / 9.0
-        val cellHeight = image.height / 3.0
 
         // Iterate through text elements (fine-grained boxes)
         for (block in visionText.textBlocks) {
             for (line in block.lines) {
+                if(line.angle>10 || line.angle<-10) continue
                 for (element in line.elements) {
                     val text = element.text.trim()
+                    Log.i("ImageReader", "Found number: $text")
                     val number = text.toIntOrNull() ?: continue
                     // Typically lotto numbers are 1..90, filter anything absurd
-                    if (number !in 1..99) continue
+                   // if (number !in 1..90) continue
 
                     val box: Rect = element.boundingBox ?: continue
                     val center = Point(box.centerX(), box.centerY())
 
-                    val col = floor(center.x / cellWidth).toInt().coerceIn(0, 8)
-                    val row = floor(center.y / cellHeight).toInt().coerceIn(0, 2)
-
                     results.add(
                         DetectedNumber(
                             value = number,
-                            position = GridPosition(row, col),
+                            position = GridPosition(1,1),
                             bbox = Rect(box)
                         )
                     )
@@ -75,7 +64,7 @@ class ImageReader {
         }
 
 //        // Deduplicate per cell: keep the largest bbox (most likely the big number) if multiple
-     //   val byCell = results.groupBy { it.position }
+//        val byCell = results.groupBy { it.position }
 //        val deduped = byCell.values.mapNotNull { candidates ->
 //            candidates.maxByOrNull { it.bbox.width().toLong() * it.bbox.height().toLong() }
 //        }
@@ -84,16 +73,12 @@ class ImageReader {
         return results
     }
 
-    fun loadBitmap(context: Context, uri: Uri): Bitmap? = try {
-        val stream: InputStream? = context.contentResolver.openInputStream(uri)
-        stream.use { BitmapFactory.decodeStream(it) }
-    } catch (t: Throwable) {
-        Log.e("ImageReader", "Failed to load bitmap: $uri", t)
-        null
+    companion object {
+        private val recognizer by lazy { TextRecognition.getClient(DEFAULT_OPTIONS) }
     }
 
     suspend fun recognize(image: InputImage): Text? = suspendCancellableCoroutine { cont ->
-        TextRecognition.getClient(DEFAULT_OPTIONS)
+        recognizer
             .process(image)
             .addOnSuccessListener { cont.resume(it) }
             .addOnFailureListener {
@@ -101,4 +86,52 @@ class ImageReader {
                 cont.resume(null)
             }
     }
+
+    fun detectAndCropRect(bitmap: Bitmap): Bitmap {
+        val mat = Mat()
+        Utils.bitmapToMat(bitmap, mat)
+
+        // Convert to grayscale
+        val gray = Mat()
+        Imgproc.cvtColor(mat, gray, Imgproc.COLOR_BGR2GRAY)
+
+        // Apply threshold
+        val thresh = Mat()
+        Imgproc.threshold(gray, thresh, 127.0, 255.0, Imgproc.THRESH_BINARY)
+
+        // Find contours
+        val contours = ArrayList<MatOfPoint>()
+        val hierarchy = Mat()
+        Imgproc.findContours(thresh, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE)
+
+        // Find largest contour
+        val maxContour = contours.maxByOrNull { Imgproc.contourArea(it) } ?: return bitmap
+
+        // Approximate contour to get rectangle
+        val peri = Imgproc.arcLength(MatOfPoint2f(*maxContour.toArray()), true)
+        val approx = MatOfPoint2f()
+        Imgproc.approxPolyDP(MatOfPoint2f(*maxContour.toArray()), approx, 0.02 * peri, true)
+
+        // Get corner points
+        val points = approx.toArray()
+        if (points.size != 4) return bitmap
+
+        // Apply perspective transform
+        val result = Mat()
+        val src = MatOfPoint2f(*points)
+        val dst = MatOfPoint2f(
+            org.opencv.core.Point(0.0, 0.0),
+            org.opencv.core.Point(bitmap.width - 1.0, 0.0),
+            org.opencv.core.Point(bitmap.width - 1.0, bitmap.height - 1.0),
+            org.opencv.core.Point(0.0, bitmap.height - 1.0)
+        )
+        val transform = Imgproc.getPerspectiveTransform(src, dst)
+        Imgproc.warpPerspective(mat, result, transform, mat.size())
+
+        // Convert back to bitmap
+        val resultBitmap = Bitmap.createBitmap(bitmap.width, bitmap.height, bitmap.config!!)
+        Utils.matToBitmap(result, resultBitmap)
+        return resultBitmap
+    }
+
 }

@@ -1,8 +1,11 @@
+import org.gradle.kotlin.dsl.maven
+
 pluginManagement {
     repositories {
         google()
         mavenCentral()
         gradlePluginPortal()
+
     }
 }
 plugins {
@@ -14,6 +17,7 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+
     }
 }
 
