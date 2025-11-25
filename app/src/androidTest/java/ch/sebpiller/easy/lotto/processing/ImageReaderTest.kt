@@ -11,6 +11,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
@@ -20,65 +21,92 @@ import java.io.FileOutputStream
 @RunWith(AndroidJUnit4::class)
 internal class ImageReaderTest {
 
-    private fun saveBitmapToFile(bitmap: Bitmap, filename: String) {
-        val context = InstrumentationRegistry.getInstrumentation().targetContext
-        val file = File(context.getExternalFilesDir(null), filename)
-        println(file.absolutePath)
-        FileOutputStream(file).use { out ->
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
-        }
+    @Test
+    fun test_cam_read_lotto_grid_webp() = runBlocking {
+        val res = testImage("lotto_grid.webp")
+        Assert.assertTrue(res.size == 15)
+
+        assertFoundAt(res, 7, 1, 0)
+        assertFoundAt(res, 8, 2, 0)
+        assertFoundAt(res, 16, 0, 1)
+        assertFoundAt(res, 16, 0, 1)
+        assertFoundAt(res, 25, 1, 2)
+        assertFoundAt(res, 28, 2, 2)
+        assertFoundAt(res, 35, 0, 3)
+        assertFoundAt(res, 39, 2, 3)
+        assertFoundAt(res, 42, 1, 4)
+        assertFoundAt(res, 51, 1, 5)
+        assertFoundAt(res, 54, 0, 5)
+        assertFoundAt(res, 66, 2, 6)
+        assertFoundAt(res, 74, 1, 7)
+        assertFoundAt(res, 76, 0, 7)
+        assertFoundAt(res, 83, 2, 8)
+        assertFoundAt(res, 89, 0, 8)
+
+        return@runBlocking
     }
 
     @Test
-    fun testRead_withAssetImage_detectsNumbersCorrectly() = runBlocking {
-        val start = System.currentTimeMillis()
-        val context = InstrumentationRegistry.getInstrumentation().context
-        val imageStream = context.assets.open("lotto_grid.png")
+    fun test_cam_read_lotto_grid_2() = runBlocking {
+        val res = testImage("stock-photo-illustration-with-lotto-cards-isolated-on-a-white-background-1519950017.jpg")
+        Assert.assertTrue(res.size == 15)
 
+        assertFoundAt(res, 5, 1, 0)
+        assertFoundAt(res, 12, 2, 1)
+        assertFoundAt(res, 19, 0, 1)
+        assertFoundAt(res, 22, 0, 2)
+        assertFoundAt(res, 24, 1, 2)
+        assertFoundAt(res, 30, 2, 3)
+        assertFoundAt(res, 38, 1, 3)
+        assertFoundAt(res, 45, 0, 4)
+        assertFoundAt(res, 49, 2, 4)
+        assertFoundAt(res, 51, 1, 5)
+        assertFoundAt(res, 63, 0, 6)
+        assertFoundAt(res, 66, 2, 6)
+        assertFoundAt(res, 71, 1, 7)
+        assertFoundAt(res, 77, 0, 7)
+        assertFoundAt(res, 89, 2, 8)
 
-        val r = ImageReader()
+        return@runBlocking
+    }
 
-        val bitmap = r.detectAndCropRect(BitmapFactory.decodeStream(imageStream))
-
-        val subImages = mutableListOf<Bitmap>()
-        val rows = 3
-        val cols = 9
-        val cellWidth = bitmap!!.width / cols
-        val cellHeight = bitmap.height / rows
-
-        val coll = mutableListOf<ImageReader.DetectedNumber>()
-
-
-
-
-        for (row in 0 until rows) {
-            for (col in 0 until cols) {
-                val subImage = Bitmap.createBitmap(
-                    bitmap,
-                    col * cellWidth,
-                    row * cellHeight,
-                    cellWidth,
-                    cellHeight
-                )
-                subImages.add(subImage)
-                saveBitmapToFile(subImage, "subimage_${row}_${col}.png")
+    private fun assertFoundAt(
+        res: MutableList<ImageReader.DetectedNumber>,
+        v: Int,
+        r: Int,
+        c: Int
+    ) {
+        for (i in res) {
+            if (i.value == v && i.position.row == r && i.position.col == c) {
+                // TEST OK
+                return
             }
         }
 
+        Assert.fail("could not find a number $v at position [$r,$c]")
+    }
 
 
-//        subImages.forEach {
-//            val x = r.read(InputImage.fromBitmap(it, 0))
-//            if (!x.isEmpty())
-//                coll.add(x.first())
-//        }
+    private suspend fun testImage(img: String): MutableList<ImageReader.DetectedNumber> {
+        val start = System.currentTimeMillis()
+        val context = InstrumentationRegistry.getInstrumentation().context
+        val imageStream = context.assets.open(img)
 
+        val originalBitmap = BitmapFactory.decodeStream(imageStream)
+        val coll = mutableListOf<ImageReader.DetectedNumber>()
 
+        val subImages = mutableListOf<Bitmap>()
+        subImages.add(originalBitmap)
 
         coroutineScope {
             val deferreds = subImages.map { bitmap ->
                 async {
-                    val result = r.read(InputImage.fromBitmap(bitmap, 0))
+                    val result = ImageReader(InstrumentationRegistry.getInstrumentation().targetContext).read(
+                        InputImage.fromBitmap(
+                            bitmap,
+                            0
+                        )
+                    )
                     result.ifEmpty { null }
                 }
             }
@@ -91,6 +119,6 @@ internal class ImageReaderTest {
         coll.sortBy { it.value }
         coll.forEach { println(it) }
 
-        return@runBlocking
+        return coll
     }
 }

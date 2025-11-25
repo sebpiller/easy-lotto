@@ -88,51 +88,109 @@ fun CameraCaptureScreen() {
 
             val executor: Executor = ContextCompat.getMainExecutor(context)
 
-            Column(
+            // Left panel state
+            var toggleOn by remember { mutableStateOf(false) }
+            var radioSelected by remember { mutableStateOf(false) }
+
+            Row(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .background(Color.Black),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .background(Color.Black)
             ) {
-                AndroidView(
+                // Left panel
+                Column(
                     modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
-                    factory = { ctx ->
-                        PreviewView(ctx).apply {
-                            scaleType = PreviewView.ScaleType.FILL_CENTER
-                            this.controller = controller
-                        }
-                    },
-                    update = { it.controller = controller }
-                )
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceEvenly
+                        .width(200.dp)
+                        .fillMaxHeight()
+                        .background(Color(0xFF101010))
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.Top,
+                    horizontalAlignment = Alignment.Start
                 ) {
-                    Button(onClick = {
-                        captureAndSavePhoto(context, controller, executor) { result ->
-                            lastSavedUri = result
-                            val msg = if (result != null) {
-                                "Saved: $result"
-                            } else "Capture failed"
+                    Text("Controls", color = Color.White)
+                    Spacer(Modifier.height(12.dp))
 
-                            scope.launch {
-                                snackbarHostState.showSnackbar(msg)
-                            }
-                        }
-                    }) {
-                        Text("Take photo")
+                    // Toggle (Switch)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Switch(checked = toggleOn, onCheckedChange = { toggleOn = it })
+                        Spacer(Modifier.width(8.dp))
+                        Text("Toggle", color = Color.White)
                     }
 
-                    lastSavedUri?.let { uri ->
-                        OutlinedButton(onClick = { processLast(context, uri) }) {
-                            Text("Import")
+                    Spacer(Modifier.height(12.dp))
+
+                    // Radio button
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        RadioButton(selected = radioSelected, onClick = { radioSelected = !radioSelected })
+                        Spacer(Modifier.width(8.dp))
+                        Text("Option A", color = Color.White)
+                    }
+
+                    Spacer(Modifier.height(12.dp))
+
+                    // Action button
+                    Button(onClick = {
+                        scope.launch {
+                            snackbarHostState.showSnackbar("Left action clicked • toggle=$toggleOn • radio=$radioSelected")
+                        }
+                    }) {
+                        Text("Left Action")
+                    }
+                }
+
+                // Right content
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    AndroidView(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth(),
+                        factory = { ctx ->
+                            PreviewView(ctx).apply {
+                                scaleType = PreviewView.ScaleType.FILL_CENTER
+                                this.controller = controller
+                            }
+                        },
+                        update = { it.controller = controller }
+                    )
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        Button(onClick = {
+                            captureAndSavePhoto(context, controller, executor) { result ->
+                                lastSavedUri = result
+                                val msg = if (result != null) {
+                                    "Saved: $result"
+                                } else "Capture failed"
+
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(msg)
+                                }
+                            }
+                        }) {
+                            Text("Take photo")
+                        }
+
+                        lastSavedUri?.let { uri ->
+                            OutlinedButton(onClick = { processLast(context, uri) }) {
+                                Text("Import")
+                            }
                         }
                     }
                 }
@@ -224,7 +282,7 @@ private fun processLast(context: Context, uri: Uri) {
     Log.d("ProcessLast", "Processing: $uri")
     CoroutineScope(Dispatchers.IO).launch {
         try {
-            val reader = ImageReader()
+            val reader = ImageReader(context)
             val bitmap = BitmapFactory.decodeStream(context.contentResolver.openInputStream(uri))
             val image = InputImage.fromBitmap(bitmap, 0)
 
