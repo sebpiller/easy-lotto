@@ -25,12 +25,12 @@ class ImageReader() {
     }
 
     data class DetectedNumber(
-        val value: Int, val position: GridPosition, val bbox: Rect
+        val value: Int, val position: GridPosition, val bbox: Rect? = null
     )
 
 
     private fun preprocessImage(bitmap: Bitmap): Bitmap {
-        val resized = resizeToMax(bitmap, 480, 320)
+        val resized = resizeToAtMost(bitmap, 480, 320)
 
         val width = resized.width
         val height = resized.height
@@ -43,7 +43,10 @@ class ImageReader() {
 
         colorMatrix.set(
             floatArrayOf(
-                2f, 0f, 0f, 0f, -128f, 0f, 2f, 0f, 0f, -128f, 0f, 0f, 2f, 0f, -128f, 0f, 0f, 0f, 1f, 0f
+                2f, 0f, 0f, 0f, -128f,
+                0f, 2f, 0f, 0f, -128f,
+                0f, 0f, 2f, 0f, -128f,
+                0f, 0f, 0f, 1f, 0f
             )
         )
 
@@ -51,10 +54,9 @@ class ImageReader() {
         canvas.drawBitmap(resized, 0f, 0f, paint)
 
         return DarkContentExtractor().extract(processedBitmap)
-
     }
 
-    fun resizeToMax(bitmap: Bitmap, maxWidth: Int = 480, maxHeight: Int = 320): Bitmap {
+    fun resizeToAtMost(bitmap: Bitmap, maxWidth: Int = 480, maxHeight: Int = 320): Bitmap {
         val width = bitmap.width
         val height = bitmap.height
 
@@ -140,11 +142,14 @@ class ImageReader() {
         // Deduplicate per cell: keep the largest bbox (most likely the big number) if multiple
         val byCell = results.groupBy { it.position }
         val deduped = byCell.values.mapNotNull { candidates ->
-            candidates.maxByOrNull { it.bbox.width().toLong() * it.bbox.height().toLong() }
+            candidates.maxByOrNull { it.bbox?.width()?.toLong()?.times(it.bbox.height().toLong()) ?: 0 }
         }
 
         Log.d("ImageReader", "Detected ${results.size} numbers")
-        return deduped.toMutableList()
+
+        val res = deduped.toMutableList();
+        res.sortBy { it.value }
+        return res
     }
 
     companion object {

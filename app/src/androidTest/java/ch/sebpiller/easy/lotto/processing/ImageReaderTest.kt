@@ -1,30 +1,25 @@
 package ch.sebpiller.easy.lotto.processing
 
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SmallTest
 import androidx.test.platform.app.InstrumentationRegistry
+import ch.sebpiller.easy.lotto.model.LottoGrid
 import com.google.mlkit.vision.common.InputImage
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.io.File
-import java.io.FileOutputStream
 
 @SmallTest
 @RunWith(AndroidJUnit4::class)
 internal class ImageReaderTest {
 
     @Test
-    fun test_cam_read_lotto_grid_webp() = runBlocking {
-        val res = testImage("lotto_grid.webp")
-        Assert.assertTrue(res.size == 15)
+    fun test_cam_read_lotto_grid_1() = runBlocking {
+        val res = recognizeCells("lotto_grid.webp")
+        Assert.assertEquals(15, res.size)
 
         assertFoundAt(res, 7, 1, 0)
         assertFoundAt(res, 8, 2, 0)
@@ -43,13 +38,17 @@ internal class ImageReaderTest {
         assertFoundAt(res, 83, 2, 8)
         assertFoundAt(res, 89, 0, 8)
 
+        val grid = LottoGrid.fromNumbers(res)
+        grid.printToConsole()
+        Assert.assertTrue("Grid invalid", grid.checkValidGrid())
+
         return@runBlocking
     }
 
     @Test
     fun test_cam_read_lotto_grid_2() = runBlocking {
-        val res = testImage("stock-photo-illustration-with-lotto-cards-isolated-on-a-white-background-1519950017.jpg")
-        Assert.assertTrue(res.size == 15)
+        val res = recognizeCells("lotto_grid2.jpg")
+        Assert.assertEquals(15, res.size)
 
         assertFoundAt(res, 5, 1, 0)
         assertFoundAt(res, 12, 2, 1)
@@ -66,6 +65,26 @@ internal class ImageReaderTest {
         assertFoundAt(res, 71, 1, 7)
         assertFoundAt(res, 77, 0, 7)
         assertFoundAt(res, 89, 2, 8)
+
+        val grid = LottoGrid.fromNumbers(res)
+        grid.printToConsole()
+        Assert.assertTrue("Grid invalid", grid.checkValidGrid())
+
+        return@runBlocking
+    }
+
+    @Test
+    fun test_cam_read_lotto_grid_3() = runBlocking {
+        val res = recognizeCells("loto-1174877_960_720.png")
+
+        // TODO
+        //Assert.assertSame(15, res.size)
+
+        //assertFoundAt(res, 5, 1, 0)
+
+        val grid = LottoGrid.fromNumbers(res)
+        grid.printToConsole()
+        Assert.assertTrue("Grid invalid", grid.checkValidGrid())
 
         return@runBlocking
     }
@@ -87,7 +106,7 @@ internal class ImageReaderTest {
     }
 
 
-    private suspend fun testImage(img: String): List<ImageReader.DetectedNumber> {
+    private suspend fun recognizeCells(img: String): List<ImageReader.DetectedNumber> {
         val start = System.currentTimeMillis()
         val context = InstrumentationRegistry.getInstrumentation().context
         val imageStream = context.assets.open(img)
@@ -96,7 +115,6 @@ internal class ImageReaderTest {
         val coll = ImageReader().read(InputImage.fromBitmap(originalBitmap, 0))
 
         Log.i("ImageReaderTest", "Read duration ${System.currentTimeMillis() - start}ms")
-        coll.sortBy { it.value }
 
         return List(coll.size) { i -> coll[i] }
     }
