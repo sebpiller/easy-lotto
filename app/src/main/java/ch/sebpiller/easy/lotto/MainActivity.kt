@@ -282,7 +282,7 @@ private fun processLast(context: Context, uri: Uri) {
     Log.d("ProcessLast", "Processing: $uri")
     CoroutineScope(Dispatchers.IO).launch {
         try {
-            val reader = ImageReader(context)
+            val reader = ImageReader()
             val bitmap = BitmapFactory.decodeStream(context.contentResolver.openInputStream(uri))
             val image = InputImage.fromBitmap(bitmap, 0)
 

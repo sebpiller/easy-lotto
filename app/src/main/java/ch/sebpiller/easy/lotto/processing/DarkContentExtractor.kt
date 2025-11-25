@@ -2,6 +2,7 @@ package ch.sebpiller.easy.lotto.processing
 
 import android.graphics.Bitmap
 import android.graphics.Color
+import androidx.core.graphics.createBitmap
 
 /**
  * DarkContentExtractor processes a bitmap as follows:
@@ -15,7 +16,7 @@ class DarkContentExtractor(
     /**
      * Blur radius in pixels for a simple box blur. Use 0 to skip blur. Typical: 2..5.
      */
-    private val blurRadius: Int = 3,
+    private val blurRadius: Int = 2,
 
     /**
      * Fraction of (blurred) grayscale pixels to preserve as the darkest content.
@@ -57,7 +58,7 @@ class DarkContentExtractor(
         // 3) Compute threshold by percentile and keep only darkest content
         val threshold = percentileThreshold(blurred, keepDarkestPercent)
 
-        val out = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val out = createBitmap(width, height)
         val outPixels = IntArray(width * height)
         for (i in blurred.indices) {
             val keep = blurred[i] <= threshold
@@ -98,9 +99,7 @@ class DarkContentExtractor(
         for (y in 0 until height) {
             var sum = 0
             val rowStart = y * width
-            // Initialize with left edge clamped
-            val first = src[rowStart]
-            val last = src[rowStart + width - 1]
+
             // sum of initial window
             for (x in -radius..radius) {
                 val xx = when {

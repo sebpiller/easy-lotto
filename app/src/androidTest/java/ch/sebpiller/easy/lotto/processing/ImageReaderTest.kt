@@ -71,7 +71,7 @@ internal class ImageReaderTest {
     }
 
     private fun assertFoundAt(
-        res: MutableList<ImageReader.DetectedNumber>,
+        res: List<ImageReader.DetectedNumber>,
         v: Int,
         r: Int,
         c: Int
@@ -87,38 +87,17 @@ internal class ImageReaderTest {
     }
 
 
-    private suspend fun testImage(img: String): MutableList<ImageReader.DetectedNumber> {
+    private suspend fun testImage(img: String): List<ImageReader.DetectedNumber> {
         val start = System.currentTimeMillis()
         val context = InstrumentationRegistry.getInstrumentation().context
         val imageStream = context.assets.open(img)
 
         val originalBitmap = BitmapFactory.decodeStream(imageStream)
-        val coll = mutableListOf<ImageReader.DetectedNumber>()
+        val coll = ImageReader().read(InputImage.fromBitmap(originalBitmap, 0))
 
-        val subImages = mutableListOf<Bitmap>()
-        subImages.add(originalBitmap)
-
-        coroutineScope {
-            val deferreds = subImages.map { bitmap ->
-                async {
-                    val result = ImageReader(InstrumentationRegistry.getInstrumentation().targetContext).read(
-                        InputImage.fromBitmap(
-                            bitmap,
-                            0
-                        )
-                    )
-                    result.ifEmpty { null }
-                }
-            }
-
-            coll.addAll(deferreds.awaitAll().filterNotNull().flatten())
-        }
-
-        Log.i("ImageReaderTest", "Read ${subImages.size} images in ${System.currentTimeMillis() - start}ms")
-        Log.i("ImageReaderTest", "Found " + coll.size + ": " + coll.toString())
+        Log.i("ImageReaderTest", "Read duration ${System.currentTimeMillis() - start}ms")
         coll.sortBy { it.value }
-        coll.forEach { println(it) }
 
-        return coll
+        return List(coll.size) { i -> coll[i] }
     }
 }
