@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import ch.sebpiller.easy.lotto.processing.ImageReader
+import ch.sebpiller.easy.lotto.ocr.LottoGridRecognizer
 import ch.sebpiller.easy.lotto.ui.theme.EasyLottoTheme
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
@@ -282,11 +282,11 @@ private fun processLast(context: Context, uri: Uri) {
     Log.d("ProcessLast", "Processing: $uri")
     CoroutineScope(Dispatchers.IO).launch {
         try {
-            val reader = ImageReader()
+            val reader = LottoGridRecognizer()
             val bitmap = BitmapFactory.decodeStream(context.contentResolver.openInputStream(uri))
             val image = InputImage.fromBitmap(bitmap, 0)
 
-            val detected = reader.read(image)
+            val detected = reader.extractAllNumbers(image)
 
             // Sort by row then column for stable output
             val sorted = detected.sortedWith(compareBy({ it.position.row }, { it.position.col }))
@@ -294,7 +294,7 @@ private fun processLast(context: Context, uri: Uri) {
             for (d in sorted) {
                 Log.i(
                     "LottoExtract",
-                    "value=${d.value} at row=${d.position.row}, col=${d.position.col}, box=${d.bbox}"
+                    "value=${d.value} at row=${d.position.row}, col=${d.position.col}"
                 )
             }
 
@@ -305,15 +305,12 @@ private fun processLast(context: Context, uri: Uri) {
                 "Detected ${sorted.size}: $items"
             }
 
-            // Post small UI feedback on main thread
-            kotlinx.coroutines.withContext(Dispatchers.Main) {
-                Toast.makeText(context, summary, Toast.LENGTH_LONG).show()
-            }
+            Toast.makeText(context, summary, Toast.LENGTH_LONG).show()
+
         } catch (t: Throwable) {
             Log.e("ProcessLast", "Failed to process image", t)
-            kotlinx.coroutines.withContext(Dispatchers.Main) {
-                Toast.makeText(context, "Processing failed: ${t.message}", Toast.LENGTH_LONG).show()
-            }
+            Toast.makeText(context, "Processing failed: ${t.message}", Toast.LENGTH_LONG).show()
+
         }
     }
 }

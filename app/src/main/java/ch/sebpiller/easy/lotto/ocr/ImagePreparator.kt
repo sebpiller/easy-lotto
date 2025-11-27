@@ -1,27 +1,11 @@
-package ch.sebpiller.easy.lotto.processing
+package ch.sebpiller.easy.lotto.ocr
 
-import android.graphics.Bitmap
-import android.graphics.Color
+import android.graphics.*
 import androidx.core.graphics.createBitmap
+import androidx.core.graphics.scale
 
-/**
- * DarkContentExtractor processes a bitmap as follows:
- * 1) blur (box blur, separable, CPU-only, no extra deps)
- * 2) convert to grayscale
- * 3) keep only the darkest content (by percentile threshold), paint others white
- *
- * The goal is to highlight dark foreground content (e.g., ink on paper) and remove background.
- */
-class DarkContentExtractor(
-    /**
-     * Blur radius in pixels for a simple box blur. Use 0 to skip blur. Typical: 2..5.
-     */
+class ImagePreparator(
     private val blurRadius: Int = 2,
-
-    /**
-     * Fraction of (blurred) grayscale pixels to preserve as the darkest content.
-     * Example: 0.15f keeps the darkest 15%.
-     */
     private val keepDarkestPercent: Float = 0.10f
 ) {
 
@@ -30,10 +14,6 @@ class DarkContentExtractor(
         require(blurRadius >= 0) { "blurRadius must be >= 0" }
     }
 
-    /**
-     * Process the input bitmap and return a new bitmap with white background where
-     * only the darkest content is kept (as black), according to [keepDarkestPercent].
-     */
     fun extract(bitmap: Bitmap): Bitmap {
         val width = bitmap.width
         val height = bitmap.height
@@ -69,10 +49,6 @@ class DarkContentExtractor(
         return out
     }
 
-    /**
-     * Compute a percentile threshold (0..255) from grayscale values.
-     * keepPercent = 0.15 => returns intensity so that ~15% values are <= threshold.
-     */
     private fun percentileThreshold(values: IntArray, keepPercent: Float): Int {
         if (values.isEmpty()) return 0
         val hist = IntArray(256)
@@ -87,10 +63,6 @@ class DarkContentExtractor(
         return 255
     }
 
-    /**
-     * Fast separable box blur. Performs horizontal then vertical passes.
-     * Edges are clamped.
-     */
     private fun boxBlur(src: IntArray, width: Int, height: Int, radius: Int): IntArray {
         val tmp = IntArray(src.size)
         val dst = IntArray(src.size)
@@ -140,4 +112,51 @@ class DarkContentExtractor(
         }
         return dst
     }
+
+
+    fun preprocessImage(bitmap: Bitmap): Bitmap {
+        val resized = resizeToAtMost(bitmap, 480, 320)
+
+        val width = resized.width
+        val height = resized.height
+        val processedBitmap = createBitmap(width, height)
+        val canvas = Canvas(processedBitmap)
+        val paint = Paint()
+
+        val colorMatrix = ColorMatrix()
+        colorMatrix.setSaturation(0f)
+
+        colorMatrix.set(
+            floatArrayOf(
+                2f, 0f, 0f, 0f, -128f,
+                0f, 2f, 0f, 0f, -128f,
+                0f, 0f, 2f, 0f, -128f,
+                0f, 0f, 0f, 1f, 0f
+            )
+        )
+
+        paint.colorFilter = ColorMatrixColorFilter(colorMatrix)
+        canvas.drawBitmap(resized, 0f, 0f, paint)
+
+        return extract(processedBitmap)
+    }
+
+    fun resizeToAtMost(bitmap: Bitmap, maxWidth: Int = 480, maxHeight: Int = 320): Bitmap {
+        val width = bitmap.width
+        val height = bitmap.height
+
+        // Nothing to do if already small enough
+        if (width <= maxWidth && height <= maxHeight) return bitmap
+
+        // Compute a uniform scale to fit within the bounds while preserving aspect ratio
+        val scale = minOf(
+            maxWidth.toFloat() / width.toFloat(), maxHeight.toFloat() / height.toFloat()
+        )
+
+        val targetWidth = (width * scale).toInt().coerceAtLeast(1)
+        val targetHeight = (height * scale).toInt().coerceAtLeast(1)
+
+        return bitmap.scale(targetWidth, targetHeight)
+    }
+
 }

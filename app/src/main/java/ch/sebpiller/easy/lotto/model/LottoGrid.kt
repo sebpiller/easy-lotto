@@ -1,41 +1,51 @@
 package ch.sebpiller.easy.lotto.model
 
-import ch.sebpiller.easy.lotto.processing.ImageReader
-
 class LottoGrid(
-    private val numbers: List<ImageReader.DetectedNumber>
+    private val numbers: List<LottoNumber>
 ) {
     companion object {
-        fun fromNumbers(numbers: List<ImageReader.DetectedNumber>): LottoGrid {
+        fun fromNumbers(numbers: List<LottoNumber>): LottoGrid {
             return LottoGrid(numbers)
         }
     }
 
-    fun checkValidGrid(): Boolean {
+    fun asValidGrid(): LottoGrid {
         // 15 elements
-        if (numbers.size != 15) throw IllegalStateException("grid size != 15: " + numbers.size)
+        check(numbers.size == 15) { "must have 15 numbers but have ${numbers.size}" }
 
         // duplicated value
-        if (numbers.map { it.value }
-                .toSet().size != 15) throw IllegalStateException("found duplicated value in the grid")
+        check(numbers.map { it.value }
+            .toSet().size == 15) { "found duplicated value in the grid" }
 
-        // overlapping cell
-        if (numbers.map { it.position }
-                .toSet().size != 15) throw IllegalStateException("two cells at the same position in the grid")
+        // 5 numbers on each row
+        for (row in 0..2) {
+            var c = 0;
 
-        for (i in numbers) {
-            // out of bounds
-            if (i.value !in 1..90) throw IllegalStateException("out of range number: ${i.value}")
+            for (col in 0..8) {
+                if (findAt(row, col) != null)
+                    c++
+            }
 
-            // number in wrong column
-            if (i.value == 90 && i.position.col != 8) throw IllegalStateException("number 90 must be located at col 9")
-            else if (i.value != 90 && i.value / 10 != i.position.col) throw IllegalStateException("number ${i.value} located at wrong column: ${i.position.col}")
+            check(c == 5) { "found $c number at row $row instead of 5" }
         }
 
-        return true
+        // overlapping cell
+        check(numbers.map { it.position }
+            .toSet().size == 15) { "two cells at the same position in the grid" }
+
+        for (i in numbers) {
+            // out of range
+            check(i.value in 1..90) { "out of range number: ${i.value} " }
+
+            // number in wrong column
+            check(!(i.value == 90 && i.position.col != 8)) { "number 90 must be located at col 9" }
+            check(!(i.value != 90 && i.value / 10 != i.position.col)) { "number ${i.value} located at wrong column: ${i.position.col}" }
+        }
+
+        return this
     }
 
-    fun findAt(row: Int, col: Int): ImageReader.DetectedNumber? {
+    fun findAt(row: Int, col: Int): LottoNumber? {
         for (i in numbers) {
             if (i.position.col == col && i.position.row == row) return i
         }
@@ -43,9 +53,9 @@ class LottoGrid(
         return null
     }
 
-    fun printToConsole() {
+    fun print() {
         for (row in 0..2) {
-            print("+ ")
+            print("+ | ")
 
             for (col in 0..8) {
                 val f = findAt(row, col)
@@ -59,5 +69,41 @@ class LottoGrid(
             println("+")
         }
 
+    }
+
+    fun mostWantedNumber(numbers: Set<Int>, step: LottoGame.GameStep): Int? {
+        var mmm: Int? = null
+        var fullRows = 0
+        for (row in 0..2) {
+            var cols = 0
+            var most: Int? = null
+
+            for (col in 0..8) {
+                val f = findAt(row, col)
+
+                if (f != null) {
+                    if (numbers.contains(f.value))
+                        cols++
+                    else
+                        most = f.value
+                }
+            }
+
+            if (cols == 5)
+                fullRows++
+            else if (cols == 4)
+                mmm = most
+        }
+
+        if (step == LottoGame.GameStep.QUINE && fullRows == 0)
+            return mmm
+
+        if (step == LottoGame.GameStep.DQUINE && fullRows == 1)
+            return mmm
+
+        if (step == LottoGame.GameStep.CARTON && fullRows == 2)
+            return mmm
+
+        return null
     }
 }

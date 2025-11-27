@@ -1,4 +1,4 @@
-package ch.sebpiller.easy.lotto.processing
+package ch.sebpiller.easy.lotto.ocr
 
 import android.graphics.BitmapFactory
 import android.util.Log
@@ -6,6 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SmallTest
 import androidx.test.platform.app.InstrumentationRegistry
 import ch.sebpiller.easy.lotto.model.LottoGrid
+import ch.sebpiller.easy.lotto.model.LottoNumber
 import com.google.mlkit.vision.common.InputImage
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert
@@ -14,10 +15,10 @@ import org.junit.runner.RunWith
 
 @SmallTest
 @RunWith(AndroidJUnit4::class)
-internal class ImageReaderTest {
+internal class LottoGridRecognizerTest {
 
     @Test
-    fun test_cam_read_lotto_grid_1() = runBlocking {
+    fun test_can_read_lotto_grid_1() = runBlocking {
         val res = recognizeCells("lotto_grid.webp")
         Assert.assertEquals(15, res.size)
 
@@ -39,14 +40,14 @@ internal class ImageReaderTest {
         assertFoundAt(res, 89, 0, 8)
 
         val grid = LottoGrid.fromNumbers(res)
-        grid.printToConsole()
-        Assert.assertTrue("Grid invalid", grid.checkValidGrid())
+        grid.print()
+        Assert.assertNotNull("Grid invalid", grid.asValidGrid())
 
         return@runBlocking
     }
 
     @Test
-    fun test_cam_read_lotto_grid_2() = runBlocking {
+    fun test_can_read_lotto_grid_2() = runBlocking {
         val res = recognizeCells("lotto_grid2.jpg")
         Assert.assertEquals(15, res.size)
 
@@ -67,14 +68,44 @@ internal class ImageReaderTest {
         assertFoundAt(res, 89, 2, 8)
 
         val grid = LottoGrid.fromNumbers(res)
-        grid.printToConsole()
-        Assert.assertTrue("Grid invalid", grid.checkValidGrid())
+        grid.print()
+        Assert.assertNotNull("Grid invalid", grid.asValidGrid())
 
         return@runBlocking
     }
 
     @Test
-    fun test_cam_read_lotto_grid_3() = runBlocking {
+    fun test_can_read_lotto_grid_3() = runBlocking {
+        val res = recognizeCells("lotto_grid3.jpg")
+        Assert.assertEquals(15, res.size)
+
+        assertFoundAt(res, 2, 0, 0)
+        assertFoundAt(res, 12, 0, 1)
+        assertFoundAt(res, 30, 0, 3)
+        assertFoundAt(res, 53, 0, 5)
+        assertFoundAt(res, 84, 0, 8)
+
+        assertFoundAt(res, 15, 1, 1)
+        assertFoundAt(res, 37, 1, 3)
+        assertFoundAt(res, 45, 1, 4)
+        assertFoundAt(res, 63, 1, 6)
+        assertFoundAt(res, 79, 1, 7)
+
+        assertFoundAt(res, 4, 2, 0)
+        assertFoundAt(res, 24, 2, 2)
+        assertFoundAt(res, 42, 2, 4)
+        assertFoundAt(res, 55, 2, 5)
+        assertFoundAt(res, 82, 2, 8)
+
+        val grid = LottoGrid.fromNumbers(res)
+        grid.print()
+        Assert.assertNotNull("Grid invalid", grid.asValidGrid())
+
+        return@runBlocking
+    }
+
+    @Test
+    fun test_can_read_lotto_grid_4() = runBlocking {
         val res = recognizeCells("loto-1174877_960_720.png")
 
         // TODO
@@ -83,14 +114,14 @@ internal class ImageReaderTest {
         //assertFoundAt(res, 5, 1, 0)
 
         val grid = LottoGrid.fromNumbers(res)
-        grid.printToConsole()
-        Assert.assertTrue("Grid invalid", grid.checkValidGrid())
+        grid.print()
+        Assert.assertNotNull("Grid invalid", grid.asValidGrid())
 
         return@runBlocking
     }
 
     private fun assertFoundAt(
-        res: List<ImageReader.DetectedNumber>,
+        res: List<LottoNumber>,
         v: Int,
         r: Int,
         c: Int
@@ -106,15 +137,15 @@ internal class ImageReaderTest {
     }
 
 
-    private suspend fun recognizeCells(img: String): List<ImageReader.DetectedNumber> {
+    private suspend fun recognizeCells(img: String): List<LottoNumber> {
         val start = System.currentTimeMillis()
         val context = InstrumentationRegistry.getInstrumentation().context
         val imageStream = context.assets.open(img)
 
         val originalBitmap = BitmapFactory.decodeStream(imageStream)
-        val coll = ImageReader().read(InputImage.fromBitmap(originalBitmap, 0))
+        val coll = LottoGridRecognizer().extractAllNumbers(InputImage.fromBitmap(originalBitmap, 0))
 
-        Log.i("ImageReaderTest", "Read duration ${System.currentTimeMillis() - start}ms")
+        Log.i("LottoGridRecognizerTest", "Read duration ${System.currentTimeMillis() - start}ms")
 
         return List(coll.size) { i -> coll[i] }
     }
