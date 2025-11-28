@@ -1,5 +1,7 @@
 package ch.sebpiller.easy.lotto.model
 
+import androidx.lifecycle.ViewModel
+
 class LottoGame {
     enum class GameStep(private val rowsToWin: Int) {
         QUINE(1),
@@ -11,16 +13,16 @@ class LottoGame {
         }
     }
 
-    private var step = GameStep.QUINE
-    private val numbers: MutableSet<Int> = HashSet(90)
-    private val userGrids: MutableList<LottoGrid> = ArrayList()
+    var step = GameStep.QUINE
+    val numbers: MutableSet<Int> = HashSet(90)
+    val grids: MutableList<LottoGrid> = ArrayList()
 
     fun removeAllGrids() {
-        userGrids.clear()
+        grids.clear()
     }
 
     fun addGrid(grid: LottoGrid) {
-        userGrids.add(grid)
+        grids.add(grid)
     }
 
     fun reset() {
@@ -42,11 +44,13 @@ class LottoGame {
         if (!numbers.add(number)) {
             System.err.println("the number $number has already been given !")
         }
+
+        return
     }
 
     // search for the most wanted number if one can make you win the game !
     fun mostWantedNumber(): Int? {
-        for (g in userGrids) {
+        for (g in grids) {
             val mostWantedNumber = g.mostWantedNumber(numbers, step)
             if (mostWantedNumber != null)
                 return mostWantedNumber
@@ -55,7 +59,7 @@ class LottoGame {
     }
 
     fun checkWin(): Boolean {
-        for (grid in userGrids) {
+        for (grid in grids) {
             var rowFull = 0
 
             for (row in 0..2) {

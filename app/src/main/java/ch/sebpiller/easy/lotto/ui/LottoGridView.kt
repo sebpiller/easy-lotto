@@ -7,14 +7,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -22,18 +20,12 @@ import androidx.compose.ui.unit.dp
 import ch.sebpiller.easy.lotto.model.LottoGrid
 import ch.sebpiller.easy.lotto.model.LottoNumber
 import ch.sebpiller.easy.lotto.model.NumberLocation
+import androidx.compose.runtime.collectAsState
 
-/**
- * Visual renderer for a 3x9 Lotto grid.
- *
- * Shows a 3 rows by 9 columns board. Each cell either displays the number assigned
- * at that [row, col] or stays empty. Optionally highlights numbers that appear in
- * [highlightedValues].
- */
 @Composable
 fun LottoGridView(
-    grid: LottoGrid,
-    highlightedValues: MutableSet<Int> = mutableSetOf()
+    game: LottoGameViewModel,
+    viewModel: LottoGridViewModel,
 ) {
     val positions = (0..2).flatMap { r -> (0..8).map { c -> r to c } }
 
@@ -45,7 +37,7 @@ fun LottoGridView(
             .padding(3.dp)
     ) {
         items(positions) { (row, col) ->
-            val num: LottoNumber? = grid.findAt(row, col)
+            val num: LottoNumber? = viewModel.grid.findAt(row, col)
 
             Card(
                 modifier = Modifier.aspectRatio(1f),
@@ -54,21 +46,21 @@ fun LottoGridView(
                 ),
             ) {
                 if (num != null) {
-                    val isHighlighted = highlightedValues.contains(num.value)
+                    val isHighlighted = viewModel.checkNumbers.collectAsState().value.contains(num.value)
 
                     TextButton(
                         modifier = Modifier
                             .aspectRatio(1f)
                             .align(Alignment.CenterHorizontally),
                         onClick = {
-                            if (isHighlighted) highlightedValues.remove(num.value) else highlightedValues.add(num.value)
+                            viewModel.toggleCheckNum(num.value)
+                            game.pushNumber(num.value)
                         },
                         colors = ButtonDefaults.textButtonColors(
                             containerColor = if (isHighlighted) Color.DarkGray else Color.LightGray,
                             contentColor = if (isHighlighted) Color.White else Color.Black,
                         ),
                     ) {
-
                         Text(
                             text = num.value.toString(),
                             softWrap = false,
@@ -112,9 +104,9 @@ fun LottoGridViewPreview() {
         )
     )
 
-    Surface() {
-        LottoGridView(
-            grid = sample, highlightedValues = mutableSetOf(12, 47, 90)
-        )
+    val viewModel = LottoGridViewModel(sample)
+
+    Surface {
+        LottoGridView(game = LottoGameViewModel(), viewModel = viewModel)
     }
 }

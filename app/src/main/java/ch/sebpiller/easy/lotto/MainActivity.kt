@@ -16,14 +16,16 @@ import ch.sebpiller.easy.lotto.ui.theme.EasyLottoTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.d("MainActivity", "onCreate called")
-        super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        super.onCreate(savedInstanceState)
+
+
         setContent {
             EasyLottoTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     MainScreen(
                         menuContent = { onClose ->
-                            SideMenu()
+                            SideMenu(onClose)
                         },
                         assets = assets,
                     )

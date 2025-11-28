@@ -15,117 +15,127 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ch.sebpiller.easy.lotto.model.LottoGrid
 import ch.sebpiller.easy.lotto.ocr.LottoGridRecognizer
 import com.google.mlkit.vision.common.InputImage
 
+
 @Composable
 fun MainScreen(
-    modifier: Modifier = Modifier,
     menuContent: @Composable (onClose: () -> Unit) -> Unit,
     assets: AssetManager,
+    vm: LottoGameViewModel = LottoGameViewModel()
 ) {
+
+    val ui by vm.ui.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        val recognizer = LottoGridRecognizer()
+        listOf("lotto_grid.webp", "lotto_grid2.jpg", "lotto_grid3.jpg").forEach { name ->
+            val img = InputImage.fromBitmap(BitmapFactory.decodeStream(assets.open(name)), 0)
+            val numbers = recognizer.extractAllNumbers(img)
+            vm.addGrid(LottoGrid.fromNumbers(numbers).asValidGrid())
+        }
+    }
+
     var menuOpen by remember { mutableStateOf(false) }
 
-    Box(modifier = modifier.fillMaxSize()) {
+    Scaffold(
+        topBar = {
+            Box(modifier = Modifier.height(10.dp).padding(bottom = 16.dp)) {
+                Text(text = "Welcome to EasyLotto", modifier = Modifier.align(Alignment.BottomEnd))
+            }
+        },
+        bottomBar = { BottomBar(ui, onNext = vm::nextPart) },
 
-            Column(
-                modifier = Modifier.fillMaxWidth()
-                    .background(Color.LightGray.copy(alpha = 0.3f))
-                    .padding(5.dp)
-            ) {
-                val recognizer = remember { LottoGridRecognizer() }
-                val grids = remember { mutableStateListOf<LottoGrid>() }
-                val highlightStates = remember { mutableStateListOf<MutableSet<Int>>() }
-
-                // TODO temp to replace
-                LaunchedEffect(Unit) {
-                    val names = listOf("lotto_grid.webp", "lotto_grid2.jpg", "lotto_grid3.jpg")
-                    for (name in names) {
-                        val img = InputImage.fromBitmap(
-                            BitmapFactory.decodeStream(assets.open(name)), 0
-                        )
-
-                        val numbers = recognizer.extractAllNumbers(img)
-                        val grid = LottoGrid.fromNumbers(numbers).asValidGrid()
-                        grids.add(grid)
-                    }
-                }
-
-                if (highlightStates.size < grids.size) {
-                    repeat(grids.size - highlightStates.size) {
-                        val x = remember { mutableStateSetOf<Int>() }
-                        highlightStates.add(x)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(25.dp))
-                Text(text = "Welcome to EasyLotto", modifier = Modifier)
-                Spacer(modifier = Modifier.height(40.dp))
-
-                grids.forEachIndexed { index, grid ->
-                    val y = highlightStates[index]
-                    LottoGridView(grid = grid, highlightedValues = y)
-                    Spacer(modifier = Modifier.height(20.dp))
-                }
+        // snackbarHost = ,
+        floatingActionButton = {
+            SmallFloatingActionButton(onClick = { menuOpen = true }) {
+                Text(
+                    text = "≡", style = MaterialTheme.typography.titleMedium
+                )
             }
 
-        // Top-right small button to open the menu
-        SmallFloatingActionButton(
-            onClick = { menuOpen = true },
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(18.dp)
-        ) {
-            Text(
-                text = "≡",
-                style = MaterialTheme.typography.titleMedium
-            )
-        }
-
-        // Scrim when open
-        if (menuOpen) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.35f))
-                    .clickable { menuOpen = false }
-            )
-        }
-
-        // Right overlay menu
-        AnimatedVisibility(
-            visible = menuOpen,
-            enter = slideInHorizontally(initialOffsetX = { it }, animationSpec = tween(200)),
-            exit = slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(200)),
-            modifier = Modifier.align(Alignment.CenterEnd)
-        ) {
-            Surface(
-                tonalElevation = 6.dp,
-                shadowElevation = 8.dp,
-                modifier = Modifier
-                    .width(280.dp)
-                    .fillMaxHeight()
-            ) {
+            // Scrim when open
+            if (menuOpen) {
                 Column(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Menu", style = MaterialTheme.typography.titleMedium)
-                        TextButton(onClick = { menuOpen = false }) { Text("Close") }
-                    }
+                        .fillMaxHeight(0.9f)
+                        .width(300.dp)
+                        .background(Color.Black.copy(alpha = 0.8f))
+                        .clickable(true) {
+                            menuOpen = false
+                        }) {
 
-                    // Let caller define the menu controls
-                    menuContent { menuOpen = false }
+
+                    AnimatedVisibility(
+                        visible = menuOpen,
+                        enter = slideInHorizontally(initialOffsetX = { it }, animationSpec = tween(200)),
+                        exit = slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(200)),
+                    ) {
+                        Surface {
+                            Column {
+                                Row {
+                                    TextButton(onClick = { menuOpen = false }) {
+                                        Text(text = "Close")
+                                    }
+                                }
+                                Row {
+                                    menuContent { menuOpen = false }
+                                }
+                            }
+                        }
+                    }
                 }
             }
+        }, floatingActionButtonPosition = FabPosition.EndOverlay
+    ) { contentPadding ->
+        Column(
+            modifier = Modifier.padding(contentPadding).background(Color.LightGray.copy(alpha = 0.3f))
+        ) {
+            vm.ui.collectAsState().value.grids.forEach {
+                LottoGridView(vm, it)
+                Spacer(modifier = Modifier.height(20.dp))
+            }
+
+            Row(
+                modifier = Modifier.padding(contentPadding).width(300.dp).height(300.dp),
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.Center,
+            ) {
+                Column {
+                    Spacer(Modifier.weight(0.1f))
+                    Text("Test1", style = MaterialTheme.typography.bodyMedium)
+                    Spacer(Modifier.height(10.dp))
+                    Text("Test2")
+                }
+                Column {
+                    Spacer(Modifier.weight(0.1f))
+                    Text("Test3")
+                    Text("Test4")
+                }
+            }
+
         }
     }
 }
+
+@Composable
+fun BottomBar(ui: GameUiState, onNext: () -> Unit) {
+    BottomAppBar(actions = {
+        TextButton(onClick = {}) {
+            Text("Most wanted: ${ui.mostWanted ?: "—"}")
+        }
+
+        TextButton(onClick = onNext) {
+            Text("${ui.step} - Next >>")
+        }
+    }
+    )
+}
+
+
+
+
+

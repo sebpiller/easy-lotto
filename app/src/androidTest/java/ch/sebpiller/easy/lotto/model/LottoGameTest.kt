@@ -52,18 +52,18 @@ internal class LottoGameTest {
         game.nextPart()
         Assert.assertFalse("You should not have win :(", game.checkWin())
 
-        Assert.assertNull(game.mostWantedNumber())
+        Assert.assertNull(game.mostWantedNumber(game))
         game.pushNumber(10)
         game.pushNumber(36)
         game.pushNumber(57)
-        Assert.assertNull(game.mostWantedNumber()) // need 2 numbers to win
+        Assert.assertNull(game.mostWantedNumber(game)) // need 2 numbers to win
 
         game.pushNumber(68)
-        Assert.assertEquals(80, game.mostWantedNumber())
+        Assert.assertEquals(80, game.mostWantedNumber(game))
 
         // after all numbers have been added, some checks:
         for (i in 1..90) game.pushNumber(i)
-        Assert.assertNull(game.mostWantedNumber()) // no more numbers can be found
+        Assert.assertNull(game.mostWantedNumber(game)) // no more numbers can be found
         Assert.assertTrue("You should have win :(", game.checkWin())
 
     }
