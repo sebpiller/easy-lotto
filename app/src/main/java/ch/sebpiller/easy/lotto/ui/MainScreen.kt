@@ -16,11 +16,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import ch.sebpiller.easy.lotto.model.LottoGame
 import ch.sebpiller.easy.lotto.model.LottoGrid
 import ch.sebpiller.easy.lotto.ocr.LottoGridRecognizer
 import com.google.mlkit.vision.common.InputImage
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     menuContent: @Composable (onClose: () -> Unit) -> Unit,
@@ -40,24 +42,38 @@ fun MainScreen(
     }
 
     var menuOpen by remember { mutableStateOf(false) }
-
+    val v = remember { mutableStateOf(false) }
+    val cc = remember { mutableStateOf(false) }
+    val c = ConfirmDialog(
+        v.value, { v.value = false }, "Next round ?",
+        onConfirm = { v.value = false ; cc.value = true },
+    )
     Scaffold(
-        topBar = {
-            Box(modifier = Modifier.height(10.dp).padding(bottom = 16.dp)) {
-                Text(text = "Welcome to EasyLotto", modifier = Modifier.align(Alignment.BottomEnd))
-            }
-        },
-        bottomBar = { BottomBar(ui, onNext = vm::nextPart) },
+        topBar = { TopAppBar(title = { Text("Welcome to EasyLotto") }) },
+        bottomBar = {
+            BottomAppBar(actions = {
+                TextButton(onClick = {}) { Text("Most wanted: ${ui.mostWanted ?: "—"}") }
+                TextButton(onClick = {
+                    if (vm.ui.value.step == LottoGame.GameStep.CARTON) {
+                        v.value = true
+                    } else {
+                        cc.value = true
+                    }
+                    if (cc.value) {
+                        vm.nextPart()
 
-        // snackbarHost = ,
+                    }
+                }) { Text("${ui.step} - Next >>") }
+            })
+        },
+
+        snackbarHost = { SnackbarHost(hostState = SnackbarHostState()) },
+        floatingActionButtonPosition = FabPosition.EndOverlay,
         floatingActionButton = {
             SmallFloatingActionButton(onClick = { menuOpen = true }) {
-                Text(
-                    text = "≡", style = MaterialTheme.typography.titleMedium
-                )
+                Text(text = "≡", style = MaterialTheme.typography.titleMedium)
             }
 
-            // Scrim when open
             if (menuOpen) {
                 Column(
                     modifier = Modifier
@@ -89,7 +105,7 @@ fun MainScreen(
                     }
                 }
             }
-        }, floatingActionButtonPosition = FabPosition.EndOverlay
+        },
     ) { contentPadding ->
         Column(
             modifier = Modifier.padding(contentPadding).background(Color.LightGray.copy(alpha = 0.3f))
@@ -98,42 +114,29 @@ fun MainScreen(
                 LottoGridView(vm, it)
                 Spacer(modifier = Modifier.height(20.dp))
             }
-
-            Row(
-                modifier = Modifier.padding(contentPadding).width(300.dp).height(300.dp),
-                verticalAlignment = Alignment.Bottom,
-                horizontalArrangement = Arrangement.Center,
-            ) {
-                Column {
-                    Spacer(Modifier.weight(0.1f))
-                    Text("Test1", style = MaterialTheme.typography.bodyMedium)
-                    Spacer(Modifier.height(10.dp))
-                    Text("Test2")
-                }
-                Column {
-                    Spacer(Modifier.weight(0.1f))
-                    Text("Test3")
-                    Text("Test4")
-                }
-            }
+//
+//            Row(
+//                modifier = Modifier.padding(contentPadding).width(300.dp).height(300.dp),
+//                verticalAlignment = Alignment.Bottom,
+//                horizontalArrangement = Arrangement.Center,
+//            ) {
+//                Column {
+//                    Spacer(Modifier.weight(0.1f))
+//                    Text("Test1", style = MaterialTheme.typography.bodyMedium)
+//                    Spacer(Modifier.height(10.dp))
+//                    Text("Test2")
+//                }
+//                Column {
+//                    Spacer(Modifier.weight(0.1f))
+//                    Text("Test3")
+//                    Text("Test4")
+//                }
+//            }
 
         }
     }
 }
 
-@Composable
-fun BottomBar(ui: GameUiState, onNext: () -> Unit) {
-    BottomAppBar(actions = {
-        TextButton(onClick = {}) {
-            Text("Most wanted: ${ui.mostWanted ?: "—"}")
-        }
-
-        TextButton(onClick = onNext) {
-            Text("${ui.step} - Next >>")
-        }
-    }
-    )
-}
 
 
 

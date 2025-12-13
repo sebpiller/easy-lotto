@@ -12,7 +12,11 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
-class LottoGridRecognizer() {
+class LottoGridRecognizer {
+    private val rows = 3
+    private val cols = 9
+    private val angleThreshold: Int = 10
+    private val confidenceThreshold: Float = 0.5f
 
     private var passesNeededForLastRecognition = 0
 
@@ -23,34 +27,32 @@ class LottoGridRecognizer() {
     suspend fun extractAllNumbers(input: InputImage): List<LottoNumber> {
         passesNeededForLastRecognition = 0
         val processedBitmap = ImagePreparator().preprocessImage(input.bitmapInternal!!)
-        val cellHeight = processedBitmap.height / 3f
-        val cellWidth = processedBitmap.width / 9f
+        val cellHeight = 1f * processedBitmap.height / rows
+        val cellWidth = 1f * processedBitmap.width / cols
         val results = mutableListOf<LNPos>()
         val recognized = recognize(InputImage.fromBitmap(processedBitmap, 0)) ?: return listOf<LottoNumber>()
 
         for (block in recognized.textBlocks) {
             for (line in block.lines) {
-                if (line.angle > 10 || line.angle < -10) continue
+                if (line.angle > angleThreshold || line.angle < -angleThreshold) continue
 
                 for (element in line.elements) {
                     val text = element.text.trim()
                     //Log.d("ImageReader", "Found raw text: $text")
 
-                    if (element.confidence < 0.5) continue
+                    if (element.confidence < confidenceThreshold) continue
                     val bb = element.boundingBox!!
                     val minHeight =
-                        processedBitmap.height * 0.333 * 0.25 // each number must be at least 25% height of a cell
+                        0.25 * (processedBitmap.height / rows)  // each number must be at least 25% height of a cell
                     if (bb.height() < minHeight) continue
 
-                    val row = ((bb.top / cellHeight).toInt())
-                    val from = (((bb.left + 10) / cellWidth).toInt())
+                    val row = ((bb.top / cellHeight)).toInt()
+                    val from = (((bb.left + 10) / cellWidth)).toInt()
 
-                    if (bb.width() <= (processedBitmap.width / 9f)) {
+                    if (bb.width() <= (processedBitmap.width / cols)) {
                         val num = text.toIntOrNull()
                         if (num != null) {
-                            results.add(
-                                LNPos(num, NumberLocation(row, from), bb)
-                            )
+                            results.add(LNPos(num, NumberLocation(row, from), bb))
                         }
                     } else {
                         val to = ((bb.left + bb.width() - 10) / cellWidth).toInt()
@@ -66,12 +68,12 @@ class LottoGridRecognizer() {
                             )
 
                             val subRecognized = recognize(InputImage.fromBitmap(subImage, 0))
-                            val text = subRecognized!!.textBlocks.map { block ->
+                            val text = subRecognized!!.textBlocks.flatMap { block ->
                                 block.lines
-                                    .filter { line -> line.angle < 10 && line.angle > -10 }
+                                    .filter { line -> line.angle < angleThreshold && line.angle > -angleThreshold }
                                     .filter { line -> line.boundingBox!!.height() > minHeight }
                                     .map { line -> line.text }
-                            }.flatten().joinToString(" ")
+                            }.joinToString(" ")
                             if (text.isBlank()) continue
 
                             val num = text.toIntOrNull()

@@ -95,10 +95,10 @@ class LottoGrid(
                 mmm = most
         }
 
-        if (step == LottoGame.GameStep.QUINE && fullRows == 0)
+        if (step == LottoGame.GameStep.QUINE && fullRows <= 0)
             return mmm
 
-        if (step == LottoGame.GameStep.DQUINE && fullRows == 1)
+        if (step == LottoGame.GameStep.DQUINE && fullRows >= 1)
             return mmm
 
         if (step == LottoGame.GameStep.CARTON && fullRows == 2)
