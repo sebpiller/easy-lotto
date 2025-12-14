@@ -1,6 +1,5 @@
 package ch.sebpiller.easy.lotto.ocr
 
-import android.graphics.Bitmap
 import android.graphics.Rect
 import android.util.Log
 import ch.sebpiller.easy.lotto.model.LottoNumber
@@ -18,14 +17,11 @@ class LottoGridRecognizer {
     private val angleThreshold: Int = 10
     private val confidenceThreshold: Float = 0.5f
 
-    private var passesNeededForLastRecognition = 0
-
     private data class LNPos(
         val value: Int, val pos: NumberLocation, val bounds: Rect
     )
 
     suspend fun extractAllNumbers(input: InputImage): List<LottoNumber> {
-        passesNeededForLastRecognition = 0
         val processedBitmap = ImagePreparator().preprocessImage(input.bitmapInternal!!)
         val cellHeight = 1f * processedBitmap.height / rows
         val cellWidth = 1f * processedBitmap.width / cols
@@ -33,53 +29,53 @@ class LottoGridRecognizer {
         val recognized = recognize(InputImage.fromBitmap(processedBitmap, 0)) ?: return listOf<LottoNumber>()
 
         for (block in recognized.textBlocks) {
-            for (line in block.lines) {
-                if (line.angle > angleThreshold || line.angle < -angleThreshold) continue
+            for (line in block.lines
+                .filter { it.angle > -angleThreshold && it.angle < angleThreshold }
+            ) {
+                for (element in line.elements
+                    .filter { it.confidence >= confidenceThreshold }
+                    .filter { it.boundingBox!!.height() > 0.25 * (processedBitmap.height / rows) }
+                ) {
+                    Log.d("LottoGridRecognizer", "Found raw text: '$element.text' with enough confidence")
 
-                for (element in line.elements) {
-                    val text = element.text.trim()
-                    //Log.d("ImageReader", "Found raw text: $text")
-
-                    if (element.confidence < confidenceThreshold) continue
+                    val text: String = element.text.trim().filter { it.isDigit() }
                     val bb = element.boundingBox!!
-                    val minHeight =
-                        0.25 * (processedBitmap.height / rows)  // each number must be at least 25% height of a cell
-                    if (bb.height() < minHeight) continue
 
-                    val row = ((bb.top / cellHeight)).toInt()
-                    val from = (((bb.left + 10) / cellWidth)).toInt()
+                    val row = (bb.top / cellHeight).toInt()
+                    val from = ((bb.left + 10) / cellWidth).toInt()
 
-                    if (bb.width() <= (processedBitmap.width / cols)) {
+                    if (bb.width() <= processedBitmap.width / cols) {
+                        // the recognized area is not bigger than expected on a single cell -> this should hold a single number
                         val num = text.toIntOrNull()
                         if (num != null) {
-                            results.add(LNPos(num, NumberLocation(row, from), bb))
+                            results.add(
+                                LNPos(
+                                    num,
+                                    NumberLocation(row, from),
+                                    bb
+                                )
+                            )
                         }
                     } else {
-                        val to = ((bb.left + bb.width() - 10) / cellWidth).toInt()
-                        //Log.i("ImageReader", "Found text overlapping several cells at $row, $from-$to")
+                        // the recognized area is covering multiple cell - need to tokenize it and recognize
+                        // multiple numbers
 
-                        for (i in from..to) {
-                            val subImage = Bitmap.createBitmap(
-                                processedBitmap,
-                                (i * cellWidth).toInt(),
-                                (row * cellHeight).toInt(),
-                                cellWidth.toInt(),
-                                cellHeight.toInt()
+                        // add an extra space if the recognized text starts at column 0
+                        // (the only column with single digit numbers)
+                        val t = if (from == 0) " $text" else text
+
+                        // at this point we should have an even number of chars
+                        assert(t.length % 2 == 0, { "should have an even number of chars: '$t'" })
+
+                        for (i in 0..<t.length step 2) {
+                            val sub = t.substring(i, i + 2).trim().toInt()
+                            results.add(
+                                LNPos(
+                                    sub,
+                                    NumberLocation(row, (sub / 10).coerceAtMost(8)),
+                                    bb // FIXME create bounds for expected location
+                                )
                             )
-
-                            val subRecognized = recognize(InputImage.fromBitmap(subImage, 0))
-                            val text = subRecognized!!.textBlocks.flatMap { block ->
-                                block.lines
-                                    .filter { line -> line.angle < angleThreshold && line.angle > -angleThreshold }
-                                    .filter { line -> line.boundingBox!!.height() > minHeight }
-                                    .map { line -> line.text }
-                            }.joinToString(" ")
-                            if (text.isBlank()) continue
-
-                            val num = text.toIntOrNull()
-                            if (num != null) {
-                                results.add(LNPos(num, NumberLocation(row = row, col = i), bb))
-                            }
                         }
                     }
                 }
@@ -100,14 +96,12 @@ class LottoGridRecognizer {
         private val recognizer by lazy {
             TextRecognition.getClient(
                 TextRecognizerOptions.Builder()
-                    //.setExecutor(MlKitThreadPool())
                     .build()
             )
         }
     }
 
     private suspend fun recognize(image: InputImage): Text? = suspendCancellableCoroutine { cont ->
-        passesNeededForLastRecognition++
         recognizer
             .process(image)
             .addOnSuccessListener { cont.resume(it) }
@@ -115,6 +109,5 @@ class LottoGridRecognizer {
                 Log.e("LottoGridRecognizer", "Text recognition failed", it)
                 cont.resume(null)
             }
-        Log.i("LottoGridRecognizer", "pass $passesNeededForLastRecognition done")
     }
 }
