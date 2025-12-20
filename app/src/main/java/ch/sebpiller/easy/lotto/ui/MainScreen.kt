@@ -1,5 +1,6 @@
 package ch.sebpiller.easy.lotto.ui
 
+import android.graphics.Bitmap
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.ImageProxy
@@ -19,16 +20,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ch.sebpiller.easy.lotto.model.Lotto
 import ch.sebpiller.easy.lotto.model.LottoGame
+import ch.sebpiller.easy.lotto.model.LottoGrid
 import ch.sebpiller.easy.lotto.ui.samples.LottoGridSamples
 import ch.sebpiller.easy.lotto.ui.tools.ConfirmDialog
 import ch.sebpiller.easy.lotto.ui.viewmodel.LottoGameViewModel
-import java.io.File
 import kotlin.system.exitProcess
 
 
@@ -37,7 +37,13 @@ import kotlin.system.exitProcess
 fun MainScreen(vm: LottoGameViewModel) {
     val scope = rememberCoroutineScope()
     val showScanner = remember { mutableStateOf(false) }
-
+    val capturedBitmap = remember { mutableStateOf<Bitmap?>(null) }
+    val croppedBitmap = remember { mutableStateOf<Bitmap?>(null) }
+    val processedBitmap = remember { mutableStateOf<Bitmap?>(null) }
+    val showCropper = remember { mutableStateOf(false) }
+    val showPreview = remember { mutableStateOf(false) }
+    val detectedGrid = remember { mutableStateOf<LottoGrid?>(null) }
+    val localContext = LocalContext.current
 
     val ui by vm.ui.collectAsStateWithLifecycle()
 
@@ -188,56 +194,85 @@ fun MainScreen(vm: LottoGameViewModel) {
             }
         }
 
-        if (showScanner.value) {
-            val localContext = LocalContext.current
+        // Caméra
+        if (showScanner.value && !showCropper.value && !showPreview.value) {
             val imageCaptureUseCase = remember { ImageCapture.Builder().build() }
 
             Column(modifier = Modifier.fillMaxWidth().aspectRatio(4f / 3)) {
                 CameraPreviewScreen(
-                    modifier = Modifier.align(
-                        Alignment.CenterHorizontally
-                    ),
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
                     imageCapture = imageCaptureUseCase
                 )
                 Row(modifier = Modifier.fillMaxWidth().align(Alignment.CenterHorizontally)) {
-                    Button(onClick = { showScanner.value = false }) { Text("Cancel") }
+                    Button(onClick = { showScanner.value = false }) { Text("Annuler") }
                     Button(onClick = {
-                        val outputFileOptions = ImageCapture.OutputFileOptions.Builder(
-                            File(
-                                localContext.externalCacheDir,
-                                "image.jpg"
-                            )
-                        )
-                            .build()
                         val callback = object : ImageCapture.OnImageCapturedCallback() {
                             override fun onCaptureSuccess(image: ImageProxy) {
                                 super.onCaptureSuccess(image)
-                                print("ssf")
-
-                                image.toBitmap()
+                                capturedBitmap.value = image.toBitmap()
+                                showCropper.value = true
                             }
 
-                            override fun onError(exception: ImageCaptureException) {
-                            }
+                            override fun onError(exception: ImageCaptureException) {}
                         }
 
                         imageCaptureUseCase.takePicture(
                             ContextCompat.getMainExecutor(localContext),
                             callback
                         )
-
-                        showScanner.value = false
-                    }) { Text("Confirm") }
+                    }) { Text("Prendre la photo") }
                 }
             }
+        }
 
+        // Recadrage
+        if (showCropper.value && capturedBitmap.value != null) {
+            ImageCropperScreen(
+                modifier = Modifier.fillMaxWidth(),
+                bitmap = capturedBitmap.value!!,
+                onCropConfirmed = {
+                    croppedBitmap.value = it!!
+                    showCropper.value = false
+                    showPreview.value = true
+
+                },
+                onCancel = {
+                    showCropper.value = false
+                    showPreview.value = false
+                },
+            )
+        }
+
+        // Prévisualisation
+        if (showPreview.value && croppedBitmap.value != null) {
+            ImagePreviewScreen(
+                croppedImage = croppedBitmap.value!!,
+             //   processedBitmap = processedBitmap.value!!,
+                detectedGrid = detectedGrid.value,
+                onConfirm = {
+                    if (detectedGrid.value != null) {
+                        vm.addGrid(detectedGrid.value!!)
+                    }
+
+                    // Réinitialiser les états
+                    showPreview.value = false
+                    showScanner.value = false
+                    capturedBitmap.value = null
+                    croppedBitmap.value = null
+                    processedBitmap.value = null
+                    detectedGrid.value = null
+                },
+                onRetry = {
+                    showPreview.value = false
+                    showCropper.value = true
+                    capturedBitmap.value = croppedBitmap.value
+                }
+            )
         }
     }
 }
 
-
 @Composable
-@Preview
 fun MainScreenPreview() {
     val game = LottoGameViewModel()
     Lotto.game.addGrid(LottoGridSamples.SAMPLE1)

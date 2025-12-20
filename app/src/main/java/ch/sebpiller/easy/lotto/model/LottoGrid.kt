@@ -1,7 +1,7 @@
 package ch.sebpiller.easy.lotto.model
 
 class LottoGrid(
-    private val numbers: List<LottoNumber>
+    val numbers: List<LottoNumber>
 ) {
     companion object {
         fun fromNumbers(numbers: List<LottoNumber>): LottoGrid {
