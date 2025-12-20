@@ -28,12 +28,13 @@ import kotlinx.coroutines.async
 
 class MainActivity : ComponentActivity() {
 
+    val mode = "fdev"
+
     override fun onCreate(savedInstanceState: Bundle?) {
         val loading = mutableStateOf(false)
         val vm = LottoGameViewModel()
 
         val x = lifecycle.coroutineScope.async {
-            val mode = "dev"
             // Add sample test data
             if (mode == "dev" && Lotto.game.grids.isEmpty()) {
                 loading.value = true
@@ -60,9 +61,7 @@ class MainActivity : ComponentActivity() {
                 val showStart = remember { mutableStateOf(true) }
                 val mode = remember { mutableStateOf("none") }
 
-
-                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    if (loading.value) {
+            if (loading.value) {
                         Column(
                             modifier = Modifier.fillMaxSize(),
                             verticalArrangement = Arrangement.Center,
@@ -82,6 +81,6 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
-        }
+
     }
 }

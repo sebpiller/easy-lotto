@@ -1,5 +1,8 @@
 package ch.sebpiller.easy.lotto.ui
 
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.ImageProxy
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
@@ -12,21 +15,20 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ch.sebpiller.easy.lotto.model.Lotto
 import ch.sebpiller.easy.lotto.model.LottoGame
-import ch.sebpiller.easy.lotto.model.LottoGrid
-import ch.sebpiller.easy.lotto.ocr.LottoGridRecognizer
 import ch.sebpiller.easy.lotto.ui.samples.LottoGridSamples
 import ch.sebpiller.easy.lotto.ui.tools.ConfirmDialog
 import ch.sebpiller.easy.lotto.ui.viewmodel.LottoGameViewModel
-import com.google.mlkit.vision.common.InputImage
-import kotlinx.coroutines.launch
+import java.io.File
 import kotlin.system.exitProcess
 
 
@@ -35,19 +37,7 @@ import kotlin.system.exitProcess
 fun MainScreen(vm: LottoGameViewModel) {
     val scope = rememberCoroutineScope()
     val showScanner = remember { mutableStateOf(false) }
-    if (showScanner.value) {
-        TakePhotoCropperDialog(
-            onDismissRequest = { showScanner.value = false },
-            onResult = { bmp ->
-                scope.launch {
-                    val img = InputImage.fromBitmap(bmp, 0)
-                    val numbers = LottoGridRecognizer().extractAllNumbers(img)
-                    vm.addGrid(LottoGrid.fromNumbers(numbers).asValidGrid())
-                    showScanner.value = false
-                }
-            }
-        )
-    }
+
 
     val ui by vm.ui.collectAsStateWithLifecycle()
 
@@ -197,9 +187,53 @@ fun MainScreen(vm: LottoGameViewModel) {
                 Spacer(modifier = Modifier.height(5.dp))
             }
         }
+
+        if (showScanner.value) {
+            val localContext = LocalContext.current
+            val imageCaptureUseCase = remember { ImageCapture.Builder().build() }
+
+            Column(modifier = Modifier.fillMaxWidth().aspectRatio(4f / 3)) {
+                CameraPreviewScreen(
+                    modifier = Modifier.align(
+                        Alignment.CenterHorizontally
+                    ),
+                    imageCapture = imageCaptureUseCase
+                )
+                Row(modifier = Modifier.fillMaxWidth().align(Alignment.CenterHorizontally)) {
+                    Button(onClick = { showScanner.value = false }) { Text("Cancel") }
+                    Button(onClick = {
+                        val outputFileOptions = ImageCapture.OutputFileOptions.Builder(
+                            File(
+                                localContext.externalCacheDir,
+                                "image.jpg"
+                            )
+                        )
+                            .build()
+                        val callback = object : ImageCapture.OnImageCapturedCallback() {
+                            override fun onCaptureSuccess(image: ImageProxy) {
+                                super.onCaptureSuccess(image)
+                                print("ssf")
+
+                                image.toBitmap()
+                            }
+
+                            override fun onError(exception: ImageCaptureException) {
+                            }
+                        }
+
+                        imageCaptureUseCase.takePicture(
+                            ContextCompat.getMainExecutor(localContext),
+                            callback
+                        )
+
+                        showScanner.value = false
+                    }) { Text("Confirm") }
+                }
+            }
+
+        }
     }
 }
-
 
 
 @Composable

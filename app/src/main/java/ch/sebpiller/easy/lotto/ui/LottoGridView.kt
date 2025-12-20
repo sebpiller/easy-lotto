@@ -36,7 +36,7 @@ fun LottoGridView(
         modifier = Modifier
             .background(Color.Green.copy(alpha = 0.1f))
             .border(2.dp, Color.Gray, RoundedCornerShape(3.dp))
-            .widthIn(min = 100.dp, max = 800.dp)
+            .widthIn(min = 100.dp, max = 400.dp)
             .aspectRatio(3f)
     ) {
         items(positions) { (row, col) ->

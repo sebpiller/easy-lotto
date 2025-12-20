@@ -54,14 +54,16 @@ android {
 }
 
 dependencies {
-    implementation("androidx.compose.runtime:runtime:1.9.5")
+    implementation("androidx.compose.runtime:runtime:1.10.0")
     val composeBom = platform("androidx.compose:compose-bom:2025.11.01")
     implementation(composeBom)
     androidTestImplementation(composeBom)
 
     implementation("androidx.core:core-ktx:1.17.0")
-    implementation("androidx.activity:activity-compose:1.12.0")
+    implementation("androidx.activity:activity-compose:1.12.2")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.10.0")
+
+ //   implementation("libs.accompanist.permissions")
 
     // Compose
     implementation("androidx.compose.ui:ui")
@@ -70,8 +72,9 @@ dependencies {
     implementation("androidx.compose.material3:material3:1.4.0")
 
     // CameraX
-    val cameraxVersion = "1.5.1"
+    val cameraxVersion = "1.5.2"
     implementation("androidx.camera:camera-core:$cameraxVersion")
+    implementation("androidx.camera:camera-compose:$cameraxVersion")
     implementation("androidx.camera:camera-camera2:$cameraxVersion")
     implementation("androidx.camera:camera-lifecycle:$cameraxVersion")
     implementation("androidx.camera:camera-view:$cameraxVersion")
@@ -83,7 +86,7 @@ dependencies {
     implementation("com.google.mlkit:text-recognition:16.0.1")
 
     // ML Kit Object Detection (on-device) for background removal
-    implementation("com.google.mlkit:object-detection:17.0.1")
+    implementation("com.google.mlkit:object-detection:17.0.2")
 
     // Coroutines (Android)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
