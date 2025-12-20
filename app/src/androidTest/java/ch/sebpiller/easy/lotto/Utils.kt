@@ -6,8 +6,7 @@ import java.io.File
 import java.io.FileOutputStream
 
 
-
- fun saveBitmapToFile(bitmap: Bitmap, filename: String) {
+fun saveBitmapToFile(bitmap: Bitmap, filename: String) {
     val context = InstrumentationRegistry.getInstrumentation().targetContext
     val file = File(context.getExternalFilesDir(null), filename)
     println(file.absolutePath)

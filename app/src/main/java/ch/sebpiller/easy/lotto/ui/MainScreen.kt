@@ -20,15 +20,22 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ch.sebpiller.easy.lotto.model.Lotto
 import ch.sebpiller.easy.lotto.model.LottoGame
 import ch.sebpiller.easy.lotto.model.LottoGrid
+import ch.sebpiller.easy.lotto.ocr.LottoGridRecognizer
+import ch.sebpiller.easy.lotto.ui.camera.CameraPreviewScreen
+import ch.sebpiller.easy.lotto.ui.camera.ImageCropperScreen
+import ch.sebpiller.easy.lotto.ui.camera.ImagePreviewScreen
 import ch.sebpiller.easy.lotto.ui.samples.LottoGridSamples
 import ch.sebpiller.easy.lotto.ui.tools.ConfirmDialog
 import ch.sebpiller.easy.lotto.ui.viewmodel.LottoGameViewModel
+import com.google.mlkit.vision.common.InputImage
+import kotlinx.coroutines.async
 import kotlin.system.exitProcess
 
 
@@ -227,6 +234,7 @@ fun MainScreen(vm: LottoGameViewModel) {
 
         // Recadrage
         if (showCropper.value && capturedBitmap.value != null) {
+
             ImageCropperScreen(
                 modifier = Modifier.fillMaxWidth(),
                 bitmap = capturedBitmap.value!!,
@@ -242,19 +250,25 @@ fun MainScreen(vm: LottoGameViewModel) {
                 },
             )
         }
+    }
 
-        // Prévisualisation
-        if (showPreview.value && croppedBitmap.value != null) {
+    // Prévisualisation
+    if (showPreview.value && croppedBitmap.value != null) {
+        Column(modifier = Modifier.fillMaxWidth().aspectRatio(4f / 3)) {
+
             ImagePreviewScreen(
+                modifier = Modifier.align(Alignment.CenterHorizontally).fillMaxSize(),
+                originalImage = capturedBitmap.value!!,
                 croppedImage = croppedBitmap.value!!,
-             //   processedBitmap = processedBitmap.value!!,
-                detectedGrid = detectedGrid.value,
                 onConfirm = {
-                    if (detectedGrid.value != null) {
-                        vm.addGrid(detectedGrid.value!!)
-                    }
 
-                    // Réinitialiser les états
+                    scope.async {
+                        // Add sample test data
+                        val detectedGrid = LottoGridRecognizer().extractAllNumbers(InputImage.fromBitmap(it, 0))
+                        val x = LottoGrid.fromNumbers(detectedGrid).asValidGrid()
+                        vm.addGrid(x)
+                    }.start()
+
                     showPreview.value = false
                     showScanner.value = false
                     capturedBitmap.value = null
@@ -266,12 +280,14 @@ fun MainScreen(vm: LottoGameViewModel) {
                     showPreview.value = false
                     showCropper.value = true
                     capturedBitmap.value = croppedBitmap.value
-                }
+                },
             )
         }
     }
 }
 
+
+@Preview
 @Composable
 fun MainScreenPreview() {
     val game = LottoGameViewModel()

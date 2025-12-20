@@ -1,8 +1,10 @@
-package ch.sebpiller.easy.lotto.ui
+package ch.sebpiller.easy.lotto.ui.camera
 
+import android.Manifest
 import android.content.Context
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
+import androidx.camera.core.Preview
 import androidx.camera.core.UseCase
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.lifecycle.awaitInstance
@@ -31,7 +33,7 @@ fun CameraPreviewScreen(
     modifier: Modifier = Modifier,
     imageCapture: ImageCapture
 ) {
-    val cameraPermissionState = rememberPermissionState(android.Manifest.permission.CAMERA)
+    val cameraPermissionState = rememberPermissionState(Manifest.permission.CAMERA)
     if (cameraPermissionState.status.isGranted) {
         CameraPreviewContent(modifier, imageCaptureUseCase = imageCapture)
     } else {
@@ -70,7 +72,7 @@ fun CameraPreviewContent(
 ) {
 
 
-    val previewUseCase = remember { androidx.camera.core.Preview.Builder().build() }
+    val previewUseCase = remember { Preview.Builder().build() }
 
     var cameraProvider by remember { mutableStateOf<ProcessCameraProvider?>(null) }
 

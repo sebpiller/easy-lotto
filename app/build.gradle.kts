@@ -5,7 +5,7 @@ plugins {
 }
 android {
     namespace = "ch.sebpiller.easy.lotto"
-    compileSdk = 36
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "ch.sebpiller.easy.lotto"
@@ -63,7 +63,7 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.12.2")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.10.0")
 
- //   implementation("libs.accompanist.permissions")
+    //   implementation("libs.accompanist.permissions")
 
     // Compose
     implementation("androidx.compose.ui:ui")

@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -19,10 +18,10 @@ import androidx.lifecycle.coroutineScope
 import ch.sebpiller.easy.lotto.model.Lotto
 import ch.sebpiller.easy.lotto.model.LottoGrid
 import ch.sebpiller.easy.lotto.ocr.LottoGridRecognizer
-import ch.sebpiller.easy.lotto.ui.viewmodel.LottoGameViewModel
 import ch.sebpiller.easy.lotto.ui.MainScreen
 import ch.sebpiller.easy.lotto.ui.StartMenu
 import ch.sebpiller.easy.lotto.ui.theme.EasyLottoTheme
+import ch.sebpiller.easy.lotto.ui.viewmodel.LottoGameViewModel
 import com.google.mlkit.vision.common.InputImage
 import kotlinx.coroutines.async
 
@@ -61,26 +60,26 @@ class MainActivity : ComponentActivity() {
                 val showStart = remember { mutableStateOf(true) }
                 val mode = remember { mutableStateOf("none") }
 
-            if (loading.value) {
-                        Column(
-                            modifier = Modifier.fillMaxSize(),
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text("Loading...", style = MaterialTheme.typography.titleLarge)
-                        }
-                    } else if (showStart.value) {
-                        StartMenu {
-                            showStart.value = false
-                            mode.value = "classical"
-                        }
-                    } else {
-                        if (mode.value == "classical") {
-                            MainScreen(vm)
-                        }
+                if (loading.value) {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text("Loading...", style = MaterialTheme.typography.titleLarge)
+                    }
+                } else if (showStart.value) {
+                    StartMenu {
+                        showStart.value = false
+                        mode.value = "classical"
+                    }
+                } else {
+                    if (mode.value == "classical") {
+                        MainScreen(vm)
                     }
                 }
             }
+        }
 
     }
 }

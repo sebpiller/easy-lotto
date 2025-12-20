@@ -1,4 +1,4 @@
-package ch.sebpiller.easy.lotto.ui
+package ch.sebpiller.easy.lotto.ui.camera
 
 import android.graphics.Bitmap
 import androidx.compose.foundation.Canvas
@@ -10,7 +10,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -21,6 +20,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import kotlin.math.abs
 
 data class CropRect(
     val left: Float,
@@ -46,7 +46,6 @@ fun ImageCropperScreen(
             )
         )
     }
-
 
 
     fun cropBitmap(bitmap: Bitmap, cropRect: CropRect): Bitmap {
@@ -80,13 +79,36 @@ fun ImageCropperScreen(
                     .pointerInput(Unit) {
                         detectDragGestures { change, dragAmount ->
                             change.consume()
+
                             val deltaX = dragAmount.x / size.width
                             val deltaY = dragAmount.y / size.height
+                            val minSize = 0.05f // 5% minimum crop size
 
-                            cropRect = cropRect.copy(
-                                left = (cropRect.left + deltaX).coerceIn(0f, cropRect.right - 0.1f),
-                                top = (cropRect.top + deltaY).coerceIn(0f, cropRect.bottom - 0.1f)
-                            )
+                            // Normalize previous position to 0-1 range for comparison
+                            val normalizedX = change.previousPosition.x / size.width
+
+                            // Check which horizontal edge is closer
+                            cropRect = if (abs(normalizedX - cropRect.left) < abs(normalizedX - cropRect.right)) {
+                                cropRect.copy(
+                                    left = (cropRect.left + deltaX).coerceIn(0f, cropRect.right - minSize),
+                                )
+                            } else {
+                                cropRect.copy(
+                                    right = (cropRect.right + deltaX).coerceIn(cropRect.left + minSize, 1f),
+                                )
+                            }
+
+                            // Check which vertical edge is closer
+                            val normalizedY = change.previousPosition.y / size.height
+                            cropRect = if (abs(normalizedY - cropRect.top) < abs(normalizedY - cropRect.bottom)) {
+                                cropRect.copy(
+                                    top = (cropRect.top + deltaY).coerceIn(0f, cropRect.bottom - minSize)
+                                )
+                            } else {
+                                cropRect.copy(
+                                    bottom = (cropRect.bottom + deltaY).coerceIn(cropRect.top + minSize, 1f)
+                                )
+                            }
                         }
                     },
                 contentScale = ContentScale.Fit
@@ -128,6 +150,45 @@ fun ImageCropperScreen(
                     size = Size(
                         cropRectPx.width,
                         cropRectPx.height
+                    ),
+                    style = Stroke(width = 2f)
+                )
+
+                // petits carrés de déco dans les coins
+                val cornerSize = 25f
+                drawRect(
+                    color = Color.Green,
+                    topLeft = Offset(cropRectPx.left, cropRectPx.top),
+                    size = Size(
+                        cornerSize,
+                        cornerSize
+                    ),
+                    style = Stroke(width = 2f)
+                )
+                drawRect(
+                    color = Color.Green,
+                    topLeft = Offset(cropRectPx.left, cropRectPx.bottom),
+                    size = Size(
+                        cornerSize,
+                        -cornerSize
+                    ),
+                    style = Stroke(width = 2f)
+                )
+                drawRect(
+                    color = Color.Green,
+                    topLeft = Offset(cropRectPx.right, cropRectPx.top),
+                    size = Size(
+                        -cornerSize,
+                        cornerSize
+                    ),
+                    style = Stroke(width = 2f)
+                )
+                drawRect(
+                    color = Color.Green,
+                    topLeft = Offset(cropRectPx.right, cropRectPx.bottom),
+                    size = Size(
+                        -cornerSize,
+                        -cornerSize
                     ),
                     style = Stroke(width = 2f)
                 )
