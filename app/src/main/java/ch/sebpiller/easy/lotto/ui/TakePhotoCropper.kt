@@ -9,7 +9,6 @@ import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -19,7 +18,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
@@ -158,13 +157,13 @@ private fun CropStage(
 ) {
     var containerSize by remember { mutableStateOf(Size.Zero) }
 
-    // Crop rect expressed in normalized [0,1] relative to displayed image area
+    // Crop values normalized [0, 1]
     var normLeft by remember { mutableFloatStateOf(0.1f) }
     var normTop by remember { mutableFloatStateOf(0.1f) }
     var normRight by remember { mutableFloatStateOf(0.9f) }
     var normBottom by remember { mutableFloatStateOf(0.9f) }
 
-    // Rotation state in degrees, limited to {0, 90, 180, 270}
+    // Rotation state in degrees
     var rotation by remember { mutableIntStateOf(0) }
 
     // Compute rotated bitmap when rotation changes
@@ -187,84 +186,80 @@ private fun CropStage(
                 TextButton(onClick = onBack) { Text("Back") }
             },
             actions = {
-                // Rotate controls
-                TextButton(onClick = { rotation = 0 }) { Text("0°") }
-                TextButton(onClick = { rotation = 90 }) { Text("90°") }
-                TextButton(onClick = { rotation = 180 }) { Text("180°") }
-                TextButton(onClick = { rotation = 270 }) { Text("270°") }
+                TextButton(onClick = { rotation = (rotation + 90) % 360 }) {
+                    Text("Rotate")
+                }
                 TextButton(onClick = {
-                    // Map normalized crop rect to original bitmap coordinates
                     val displayW = containerSize.width
                     val displayH = containerSize.height
                     if (displayW <= 0f || displayH <= 0f) return@TextButton
 
-                    val cropRectOnDisplay = android.graphics.RectF(
-                        normLeft * displayW,
-                        normTop * displayH,
-                        normRight * displayW,
-                        normBottom * displayH
-                    )
-
-                    // Compute how the bitmap fits into the container (contain with aspect fit)
-                    val fit =
-                        fitCenter(displayBitmap.width.toFloat(), displayBitmap.height.toFloat(), displayW, displayH)
+                    val fit = fitCenter(displayBitmap.width.toFloat(), displayBitmap.height.toFloat(), displayW, displayH)
+                    val scale = displayBitmap.width / fit.width
                     val imageLeft = (displayW - fit.width) / 2f
                     val imageTop = (displayH - fit.height) / 2f
 
-                    // Intersect crop with image area and map to bitmap pixels
-                    val intersectLeft = (cropRectOnDisplay.left - imageLeft).coerceIn(0f, fit.width)
-                    val intersectTop = (cropRectOnDisplay.top - imageTop).coerceIn(0f, fit.height)
-                    val intersectRight = (cropRectOnDisplay.right - imageLeft).coerceIn(0f, fit.width)
-                    val intersectBottom = (cropRectOnDisplay.bottom - imageTop).coerceIn(0f, fit.height)
+                    val outLeft = (((normLeft * displayW - imageLeft) * scale).toInt()).coerceIn(0, displayBitmap.width - 1)
+                    val outTop = (((normTop * displayW - imageTop) * scale).toInt()).coerceIn(0, displayBitmap.height - 1)
+                    val outRight = (((normRight * displayW - imageLeft) * scale).toInt()).coerceIn(outLeft + 1, displayBitmap.width)
+                    val outBottom = (((normBottom * displayW - imageTop) * scale).toInt()).coerceIn(outTop + 1, displayBitmap.height)
 
-                    val scaleX = displayBitmap.width / fit.width
-                    val scaleY = displayBitmap.height / fit.height
-
-                    val outLeft = (intersectLeft * scaleX).toInt().coerceIn(0, displayBitmap.width - 1)
-                    val outTop = (intersectTop * scaleY).toInt().coerceIn(0, displayBitmap.height - 1)
-                    val outRight = (intersectRight * scaleX).toInt().coerceIn(outLeft + 1, displayBitmap.width)
-                    val outBottom = (intersectBottom * scaleY).toInt().coerceIn(outTop + 1, displayBitmap.height)
-
-                    val cropped = cropBitmap(displayBitmap, Rect(outLeft, outTop, outRight, outBottom))
-                    onConfirm(cropped)
+                    onConfirm(cropBitmap(displayBitmap, Rect(outLeft, outTop, outRight, outBottom)))
                 }) { Text("Done") }
             }
         )
 
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.9f)),
-            contentAlignment = Alignment.Center
-        ) {
-            // Displayed image area fits inside the Box while preserving aspect ratio
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Image(
-                    bitmap = displayBitmap.asImageBitmap(),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .onGloballyPositioned { layoutCoordinates ->
-                            val s: IntSize = layoutCoordinates.size
-                            containerSize = Size(s.width.toFloat(), s.height.toFloat())
-                        }
-                )
+        Column(Modifier.fillMaxSize().padding(16.dp)) {
+            // Sliders for cropping
+            CropSlider(label = "Left", value = normLeft, onValueChange = { normLeft = it.coerceAtMost(normRight - 0.05f) })
+            CropSlider(label = "Right", value = normRight, onValueChange = { normRight = it.coerceAtLeast(normLeft + 0.05f) })
+            CropSlider(label = "Top", value = normTop, onValueChange = { normTop = it.coerceAtMost(normBottom - 0.05f) })
+            CropSlider(label = "Bottom", value = normBottom, onValueChange = { normBottom = it.coerceAtLeast(normTop + 0.05f) })
 
-                // Overlay crop
-                CropOverlay(
-                    normLeft = normLeft,
-                    normTop = normTop,
-                    normRight = normRight,
-                    normBottom = normBottom,
-                    onChange = { l, t, r, b ->
-                        normLeft = l
-                        normTop = t
-                        normRight = r
-                        normBottom = b
-                    }
-                )
+            Spacer(Modifier.height(16.dp))
+
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .background(Color.Black.copy(alpha = 0.9f)),
+                contentAlignment = Alignment.Center
+            ) {
+                // Displayed image area fits inside the Box while preserving aspect ratio
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Image(
+                        bitmap = displayBitmap.asImageBitmap(),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .onGloballyPositioned { layoutCoordinates ->
+                                val s = layoutCoordinates.size
+                                containerSize = Size(s.width.toFloat(), s.height.toFloat())
+                            }
+                    )
+
+                    CropOverlay(
+                        normLeft = normLeft,
+                        normTop = normTop,
+                        normRight = normRight,
+                        normBottom = normBottom
+                    )
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun CropSlider(label: String, value: Float, onValueChange: (Float) -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(label, modifier = Modifier.width(60.dp), style = MaterialTheme.typography.bodySmall)
+        Slider(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = Modifier.weight(1f),
+            valueRange = 0f..1f
+        )
     }
 }
 
@@ -273,94 +268,9 @@ private fun CropOverlay(
     normLeft: Float,
     normTop: Float,
     normRight: Float,
-    normBottom: Float,
-    onChange: (Float, Float, Float, Float) -> Unit,
-    handleSize: Dp = 18.dp,
-    minRectSizeFraction: Float = 0.1f,
+    normBottom: Float
 ) {
-    var dragMode by remember { mutableStateOf<DragMode?>(null) }
-
-    Canvas(
-        modifier = Modifier
-            .fillMaxSize()
-            .pointerInput(Unit) {
-                detectDragGestures(
-                    onDragStart = { pos ->
-                        dragMode = detectDragMode(
-                            pos,
-                            normLeft,
-                            normTop,
-                            normRight,
-                            normBottom,
-                            Size(size.width.toFloat(), size.height.toFloat()),
-                            handleSize.toPx()
-                        )
-                    },
-                    onDragEnd = { dragMode = null },
-                    onDragCancel = { dragMode = null }
-                ) { change, drag ->
-                    change.consume()
-                    val w = size.width
-                    val h = size.height
-                    var l = normLeft
-                    var t = normTop
-                    var r = normRight
-                    var b = normBottom
-
-                    val dx = drag.x / w
-                    val dy = drag.y / h
-
-                    when (dragMode) {
-                        DragMode.MOVE -> {
-                            l += dx; r += dx; t += dy; b += dy
-                        }
-
-                        DragMode.LEFT -> {
-                            l += dx
-                        }
-
-                        DragMode.RIGHT -> {
-                            r += dx
-                        }
-
-                        DragMode.TOP -> {
-                            t += dy
-                        }
-
-                        DragMode.BOTTOM -> {
-                            b += dy
-                        }
-
-                        DragMode.TOP_LEFT -> {
-                            l += dx; t += dy
-                        }
-
-                        DragMode.TOP_RIGHT -> {
-                            r += dx; t += dy
-                        }
-
-                        DragMode.BOTTOM_LEFT -> {
-                            l += dx; b += dy
-                        }
-
-                        DragMode.BOTTOM_RIGHT -> {
-                            r += dx; b += dy
-                        }
-
-                        null -> {}
-                    }
-
-                    // Constraints
-                    val minSize = minRectSizeFraction
-                    l = l.coerceIn(0f, 1f - minSize)
-                    t = t.coerceIn(0f, 1f - minSize)
-                    r = r.coerceIn(l + minSize, 1f)
-                    b = b.coerceIn(t + minSize, 1f)
-
-                    onChange(l, t, r, b)
-                }
-            }
-    ) {
+    Canvas(modifier = Modifier.fillMaxSize()) {
         val w = size.width
         val h = size.height
         val left = normLeft * w
@@ -370,7 +280,8 @@ private fun CropOverlay(
 
         // Darken outside
         drawRect(color = Color.Black.copy(alpha = 0.5f))
-        // Clear inside by drawing transparent rect via blend mode is more complex; draw a bright border and guides instead
+        
+        // Highlight crop area
         drawRect(
             color = Color.White.copy(alpha = 0.12f),
             topLeft = Offset(left, top),
@@ -381,65 +292,8 @@ private fun CropOverlay(
             color = Color(0xFF64B5F6),
             topLeft = Offset(left, top),
             size = Size(right - left, bottom - top),
-            style = androidx.compose.ui.graphics.drawscope.Stroke(width = 3f)
+            style = Stroke(width = 3f)
         )
-        // Rule of thirds
-        val thirdW = (right - left) / 3f
-        val thirdH = (bottom - top) / 3f
-        for (i in 1..2) {
-            val x = left + thirdW * i
-            val y = top + thirdH * i
-            drawLine(Color.White.copy(alpha = 0.3f), Offset(x, top), Offset(x, bottom), strokeWidth = 1.5f)
-            drawLine(Color.White.copy(alpha = 0.3f), Offset(left, y), Offset(right, y), strokeWidth = 1.5f)
-        }
-
-        // Corner handles
-        val hs = handleSize.toPx()
-        drawHandle(left, top, hs)
-        drawHandle(right, top, hs)
-        drawHandle(left, bottom, hs)
-        drawHandle(right, bottom, hs)
-    }
-}
-
-private enum class DragMode { MOVE, LEFT, RIGHT, TOP, BOTTOM, TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT }
-
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawHandle(x: Float, y: Float, size: Float) {
-    drawRect(
-        color = Color(0xFF64B5F6),
-        topLeft = Offset(x - size / 2f, y - size / 2f),
-        size = Size(size, size)
-    )
-}
-
-private fun detectDragMode(
-    pos: Offset,
-    nl: Float,
-    nt: Float,
-    nr: Float,
-    nb: Float,
-    canvasSize: Size,
-    handleSizePx: Float
-): DragMode {
-    val l = nl * canvasSize.width
-    val t = nt * canvasSize.height
-    val r = nr * canvasSize.width
-    val b = nb * canvasSize.height
-
-    val nearHandle = { hx: Float, hy: Float ->
-        (kotlin.math.abs(pos.x - hx) <= handleSizePx && kotlin.math.abs(pos.y - hy) <= handleSizePx)
-    }
-    return when {
-        nearHandle(l, t) -> DragMode.TOP_LEFT
-        nearHandle(r, t) -> DragMode.TOP_RIGHT
-        nearHandle(l, b) -> DragMode.BOTTOM_LEFT
-        nearHandle(r, b) -> DragMode.BOTTOM_RIGHT
-        kotlin.math.abs(pos.x - l) <= handleSizePx && pos.y in t..b -> DragMode.LEFT
-        kotlin.math.abs(pos.x - r) <= handleSizePx && pos.y in t..b -> DragMode.RIGHT
-        kotlin.math.abs(pos.y - t) <= handleSizePx && pos.x in l..r -> DragMode.TOP
-        kotlin.math.abs(pos.y - b) <= handleSizePx && pos.x in l..r -> DragMode.BOTTOM
-        pos.x in l..r && pos.y in t..b -> DragMode.MOVE
-        else -> DragMode.MOVE
     }
 }
 
