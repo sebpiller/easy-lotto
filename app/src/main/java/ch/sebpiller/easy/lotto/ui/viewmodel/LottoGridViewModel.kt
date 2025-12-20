@@ -1,4 +1,4 @@
-package ch.sebpiller.easy.lotto.ui
+package ch.sebpiller.easy.lotto.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import ch.sebpiller.easy.lotto.model.LottoGrid
@@ -19,6 +19,10 @@ class LottoGridViewModel(
         _checkedNumbers.update { current ->
             if (current.contains(num)) current - num else current + num
         }
+    }
+
+    fun resetCheckNumbers() {
+        _checkedNumbers.update { setOf() }
     }
 
 }

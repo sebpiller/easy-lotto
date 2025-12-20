@@ -4,12 +4,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
@@ -17,10 +19,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import ch.sebpiller.easy.lotto.model.LottoGrid
 import ch.sebpiller.easy.lotto.model.LottoNumber
-import ch.sebpiller.easy.lotto.model.NumberLocation
-import androidx.compose.runtime.collectAsState
+import ch.sebpiller.easy.lotto.ui.samples.LottoGridSamples
+import ch.sebpiller.easy.lotto.ui.viewmodel.LottoGameViewModel
+import ch.sebpiller.easy.lotto.ui.viewmodel.LottoGridViewModel
 
 @Composable
 fun LottoGridView(
@@ -32,9 +34,10 @@ fun LottoGridView(
     LazyVerticalGrid(
         columns = GridCells.Fixed(9),
         modifier = Modifier
-            .background(Color.Blue.copy(alpha = 0.3f))
-            .border(1.dp, Color.Yellow, RoundedCornerShape(3.dp))
-            .padding(3.dp)
+            .background(Color.Green.copy(alpha = 0.1f))
+            .border(2.dp, Color.Gray, RoundedCornerShape(3.dp))
+            .widthIn(min = 100.dp, max = 800.dp)
+            .aspectRatio(3f)
     ) {
         items(positions) { (row, col) ->
             val num: LottoNumber? = viewModel.grid.findAt(row, col)
@@ -51,7 +54,8 @@ fun LottoGridView(
                     TextButton(
                         modifier = Modifier
                             .aspectRatio(1f)
-                            .align(Alignment.CenterHorizontally),
+                            .align(Alignment.CenterHorizontally)
+                            .padding(1.dp),
                         onClick = {
                             viewModel.toggleCheckNum(num.value)
                             game.pushNumber(num.value)
@@ -67,9 +71,8 @@ fun LottoGridView(
                             textAlign = TextAlign.Center,
                             modifier = Modifier
                                 .align(CenterVertically)
-                                .background(Color.Transparent),
-
-                            )
+                                .background(Color.Transparent)
+                        )
                     }
                 }
 
@@ -81,30 +84,7 @@ fun LottoGridView(
 @Composable
 @Preview
 fun LottoGridViewPreview() {
-    val sample = LottoGrid.fromNumbers(
-        listOf(
-            // Row 0
-            LottoNumber(1, NumberLocation(0, 0)),
-            LottoNumber(12, NumberLocation(0, 1)),
-            LottoNumber(26, NumberLocation(0, 2)),
-            LottoNumber(40, NumberLocation(0, 4)),
-            LottoNumber(90, NumberLocation(0, 8)),
-            // Row 1
-            LottoNumber(5, NumberLocation(1, 0)),
-            LottoNumber(18, NumberLocation(1, 1)),
-            LottoNumber(29, NumberLocation(1, 2)),
-            LottoNumber(55, NumberLocation(1, 5)),
-            LottoNumber(63, NumberLocation(1, 6)),
-            // Row 2
-            LottoNumber(7, NumberLocation(2, 0)),
-            LottoNumber(21, NumberLocation(2, 2)),
-            LottoNumber(33, NumberLocation(2, 3)),
-            LottoNumber(47, NumberLocation(2, 4)),
-            LottoNumber(84, NumberLocation(2, 8)),
-        )
-    )
-
-    val viewModel = LottoGridViewModel(sample)
+    val viewModel = LottoGridViewModel(LottoGridSamples.SAMPLE1)
 
     Surface {
         LottoGridView(game = LottoGameViewModel(), viewModel = viewModel)

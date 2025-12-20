@@ -1,4 +1,4 @@
-package ch.sebpiller.easy.lotto.ui
+package ch.sebpiller.easy.lotto.ui.tools
 
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text

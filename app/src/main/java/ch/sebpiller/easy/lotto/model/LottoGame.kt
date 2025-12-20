@@ -1,12 +1,10 @@
 package ch.sebpiller.easy.lotto.model
 
-import androidx.lifecycle.ViewModel
-
 class LottoGame {
-    enum class GameStep(private val rowsToWin: Int) {
-        QUINE(1),
-        DQUINE(2),
-        CARTON(3);
+    enum class GameStep(private val rowsToWin: Int, val label: String) {
+        QUINE(1, "X"),
+        DQUINE(2, "XX"),
+        CARTON(3, "XXX");
 
         fun canBeWinWithRows(rowFull: Int): Boolean {
             return rowFull >= rowsToWin
@@ -14,7 +12,7 @@ class LottoGame {
     }
 
     var step = GameStep.QUINE
-    val numbers: MutableSet<Int> = HashSet(90)
+    val pickedNumbers: MutableSet<Int> = HashSet(90)
     val grids: MutableList<LottoGrid> = ArrayList()
 
     fun removeAllGrids() {
@@ -27,21 +25,24 @@ class LottoGame {
 
     fun reset() {
         step = GameStep.QUINE
-        numbers.clear()
+        pickedNumbers.clear()
     }
 
     fun nextPart() {
+        if (step == GameStep.CARTON) pickedNumbers.clear()
+
         step = when (step) {
             GameStep.QUINE -> GameStep.DQUINE
             GameStep.DQUINE -> GameStep.CARTON
             GameStep.CARTON -> GameStep.QUINE
         }
+
     }
 
     fun pushNumber(number: Int) {
         require(number in 1..90) { "number must be between 1 and 90" }
 
-        if (!numbers.add(number)) {
+        if (!pickedNumbers.add(number)) {
             System.err.println("the number $number has already been given !")
         }
 
@@ -51,7 +52,7 @@ class LottoGame {
     // search for the most wanted number if one can make you win the game !
     fun mostWantedNumber(): Int? {
         for (g in grids) {
-            val mostWantedNumber = g.mostWantedNumber(numbers, step)
+            val mostWantedNumber = g.mostWantedNumber(pickedNumbers, step)
             if (mostWantedNumber != null)
                 return mostWantedNumber
         }
@@ -68,7 +69,7 @@ class LottoGame {
                 for (col in 0..8) {
                     val n = grid.findAt(row, col)
 
-                    if (n != null && numbers.contains(n.value)) {
+                    if (n != null && pickedNumbers.contains(n.value)) {
                         foundNOnRow++
                     }
                 }
