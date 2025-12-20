@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -529,5 +530,15 @@ private fun TakePhotoResultDialog(
             }
         },
         title = {}
+    )
+}
+
+@Preview
+@Composable
+private fun TakePhotoResultDialogPreview() {
+    TakePhotoResultDialog(
+        bitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888),
+        onUse = {},
+        onClose = {}
     )
 }

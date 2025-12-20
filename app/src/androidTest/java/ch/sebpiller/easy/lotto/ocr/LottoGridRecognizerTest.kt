@@ -104,6 +104,7 @@ internal class LottoGridRecognizerTest {
         return@runBlocking
     }
 
+
     @Test
     fun test_can_read_lotto_grid_4() = runBlocking {
         val res = recognizeCells("loto-1174877_960_720.png")
@@ -112,6 +113,28 @@ internal class LottoGridRecognizerTest {
         //Assert.assertSame(15, res.size)
 
         //assertFoundAt(res, 5, 1, 0)
+
+        val grid = LottoGrid.fromNumbers(res)
+        grid.print()
+        Assert.assertNotNull("Grid invalid", grid.asValidGrid())
+
+        return@runBlocking
+    }
+
+    @Test
+    fun test_can_read_lotto_from_real_photo() = runBlocking {
+        val res = recognizeCells("img.png")
+
+        val grid = LottoGrid.fromNumbers(res)
+        grid.print()
+        Assert.assertNotNull("Grid invalid", grid.asValidGrid())
+
+        return@runBlocking
+    }
+
+    @Test
+    fun test_can_read_lotto_from_real_photo_1() = runBlocking {
+        val res = recognizeCells("img_1.png")
 
         val grid = LottoGrid.fromNumbers(res)
         grid.print()

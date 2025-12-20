@@ -36,7 +36,7 @@ class LottoGridRecognizer {
                     .filter { it.confidence >= confidenceThreshold }
                     .filter { it.boundingBox!!.height() > 0.25 * (processedBitmap.height / rows) }
                 ) {
-                    Log.d("LottoGridRecognizer", "Found raw text: '$element.text' with enough confidence")
+                    Log.d("LottoGridRecognizer", "Found raw text: '${element.text}' with enough confidence")
 
                     val text = element.text.trim().filter { it.isDigit() }
                     val bb = element.boundingBox!!
