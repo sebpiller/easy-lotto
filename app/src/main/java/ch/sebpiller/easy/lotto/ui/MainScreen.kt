@@ -102,15 +102,15 @@ fun MainScreen(vm: LottoGameViewModel) {
                                 exit = slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(200)),
                             ) {
                                 Text(
-                                    "HOT!! ${ui.mostWanted} !!HOT",
+                                    text = "HOT!! ${ui.mostWanted} !!HOT",
                                     modifier = Modifier.fillMaxWidth(),
-                                    style = MaterialTheme.typography.bodyMedium.plus(
+                                    style = MaterialTheme.typography.bodyLarge.plus(
                                         TextStyle(
                                             color = Color.Red,
                                             textAlign = TextAlign.Center,
                                             fontWeight = FontWeight.Bold
                                         )
-                                    )
+                                    ),
                                 )
                             }
                         }
@@ -195,9 +195,11 @@ fun MainScreen(vm: LottoGameViewModel) {
         Column(
             modifier = Modifier.padding(contentPadding),
         ) {
-            vm.ui.collectAsState().value.grids.forEach {
-                LottoGridView(vm, it)
-                Spacer(modifier = Modifier.height(5.dp))
+            vm.ui.collectAsState().value.grids.forEach { lgvm ->
+                LottoGridView(vm, lgvm) { lg ->
+                    vm.grids.value.forEach { lg2 -> lg2.syncCheckedNumbers(lg.game) }
+                }
+                Spacer(modifier = Modifier.height(10.dp))
             }
         }
 
@@ -239,7 +241,7 @@ fun MainScreen(vm: LottoGameViewModel) {
                 modifier = Modifier.fillMaxWidth(),
                 bitmap = capturedBitmap.value!!,
                 onCropConfirmed = {
-                    croppedBitmap.value = it!!
+                    croppedBitmap.value = it
                     showCropper.value = false
                     showPreview.value = true
 

@@ -30,6 +30,7 @@ import ch.sebpiller.easy.lotto.ui.viewmodel.LottoGridViewModel
 fun LottoGridView(
     game: LottoGameViewModel,
     viewModel: LottoGridViewModel,
+    onGameCallback: Function1<LottoGameViewModel, Unit>? = {},
 ) {
     val positions = (0..2).flatMap { r -> (0..8).map { c -> r to c } }
 
@@ -63,8 +64,13 @@ fun LottoGridView(
                             .border(1.dp, Color.Black, RoundedCornerShape(4.dp)),
 
                         onClick = {
-                            viewModel.toggleCheckNum(num.value)
-                            game.pushNumber(num.value)
+                            game.ui.value.numbers.contains(num.value).let {
+                                if (it)
+                                    game.removeNumber(num.value)
+                                else
+                                    game.pushNumber(num.value)
+                            }
+                            onGameCallback?.invoke(game)
                         },
                         colors = ButtonDefaults.textButtonColors(
                             containerColor = if (isHighlighted) Color.DarkGray else Color.Transparent,

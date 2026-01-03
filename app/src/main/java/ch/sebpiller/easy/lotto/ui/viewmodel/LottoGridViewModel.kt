@@ -1,6 +1,7 @@
 package ch.sebpiller.easy.lotto.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
+import ch.sebpiller.easy.lotto.domain.LottoGame
 import ch.sebpiller.easy.lotto.domain.LottoGrid
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,6 +20,11 @@ class LottoGridViewModel(
         _checkedNumbers.update { current ->
             if (current.contains(num)) current - num else current + num
         }
+    }
+
+    fun syncCheckedNumbers(game: LottoGame) {
+        //Log.d("LGVM", "syncCheckedNumbers")
+        _checkedNumbers.update { HashSet(game.pickedNumbers) }
     }
 
     fun resetCheckNumbers() {

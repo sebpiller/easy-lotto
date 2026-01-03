@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
 class LottoGameViewModel : ViewModel() {
-    private val game = Lotto.Companion.game
+    val game = Lotto.game
 
     private val _grids = MutableStateFlow<Set<LottoGridViewModel>>(setOf())
 
@@ -34,7 +34,12 @@ class LottoGameViewModel : ViewModel() {
 
     // intents (called by UI)
     fun pushNumber(n: Int) {
-        game.pushNumber(n)
+        game.registerPickedNumber(n)
+        emit()
+    }
+
+    fun removeNumber(n: Int) {
+        game.unregisterPickedNumber(n)
         emit()
     }
 
@@ -68,4 +73,5 @@ class LottoGameViewModel : ViewModel() {
         gridSync()
         emit()
     }
+
 }

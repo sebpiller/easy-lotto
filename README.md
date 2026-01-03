@@ -9,6 +9,25 @@ I love you Mom!
 
 <img alt="Lotto" src="app/src/androidTest/assets/lotto_grid.webp" width="200"/>
 
+
+## Run in waydroid
+
+To run this app in waydroid, follow these steps:
+
+1. Install waydroid on your device.
+2. Clone this repository.
+3. Open the project in Android Studio.
+4. Build and run the app on waydroid.
+
+```shell
+waydroid session start
+```
+
+```shell
+waydroid app install app/build/outputs/apk/debug/app-debug.apk
+waydroid app launch ch.sebpiller.easy.lotto
+```
+
 ---
 
 ### Easy Lotto — Android camera app module
@@ -50,6 +69,8 @@ the device:
 
 Tap “Take photo” to capture an image. On API 29+, photos are visible in the system gallery under Pictures/EasyLotto. On
 API 24–28, they are stored in the app’s external files directory.
+
+
 
 #### Play Store readiness notes
 

@@ -73,7 +73,7 @@ class LottoGridRecognizer {
             results.add(
                 LNPos(
                     text.toInt(),
-                    XY(hitRow, hitColFrom),
+                    XY(hitColFrom, hitRow),
                     bb
                 )
             )
@@ -93,7 +93,7 @@ class LottoGridRecognizer {
                 results.add(
                     LNPos(
                         token,
-                        XY(hitRow, (token / 10).coerceAtMost(8)),
+                        XY((token / 10).coerceAtMost(8), hitRow),
                         bb // TODO create bounds for expected location
                     )
                 )

@@ -17,7 +17,7 @@ class LottoGridTest {
         val game = LottoGrid.fromNumbers(
             listOf(
                 LottoNum(
-                    value = 1, position = XY(0, 0),
+                    value = 1, position = XY(),
                 )
             )
         ).asValidGrid()

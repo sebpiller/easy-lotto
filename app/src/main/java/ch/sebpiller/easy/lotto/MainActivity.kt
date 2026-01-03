@@ -37,54 +37,109 @@ class MainActivity : ComponentActivity() {
             if (mode == "dev" && Lotto.game.grids.isEmpty()) {
                 loading.value = true
 
-
-                Lotto.game.addGrid(LottoGrid.fromNumbers(
-                    listOf(
-                        LottoNum(9, XY(0, 0)),
-                        LottoNum(28, XY(0, 2)),
-                        LottoNum(31, XY(0, 3)),
-                        LottoNum(47, XY(0, 4)),
-                        LottoNum(72, XY(0, 7)),
-
-
-                        LottoNum(21, XY(1, 2)),
-                        LottoNum(37, XY(1, 3)),
-                        LottoNum(54, XY(1, 5)),
-                        LottoNum(61, XY(1, 6)),
-                        LottoNum(85, XY(1, 8)),
-
-                        LottoNum(6, XY(2, 0)),
-                        LottoNum(15, XY(2, 1)),
-                        LottoNum(40, XY(2, 4)),
-                        LottoNum(60, XY(2, 6)),
-                        LottoNum(70, XY(2, 7)),
-                    )
-
-                ).asValidGrid())
-
-                Lotto.game.addGrid(LottoGrid.fromNumbers(
-                    listOf(
-                        LottoNum(6, XY(0, 0)),
-                        LottoNum(14, XY(0, 1)),
-                        LottoNum(27, XY(0, 2)),
-                        LottoNum(49, XY(0, 4)),
-                        LottoNum(70, XY(0, 7)),
+                Lotto.game.addGrid(
+                    LottoGrid.fromNumbers(
+                        listOf(
+                            LottoNum(10, XY(1, 0)),
+                            LottoNum(31, XY(3, 0)),
+                            LottoNum(41, XY(4,0)),
+                            LottoNum(65, XY(6,0)),
+                            LottoNum(83, XY(8,0)),
 
 
-                        LottoNum(13, XY(1, 1)),
-                        LottoNum(36, XY(1, 3)),
-                        LottoNum(58, XY(1, 5)),
-                        LottoNum(77, XY(1, 7)),
-                        LottoNum(80, XY(1, 8)),
+                            LottoNum(9, XY(0, 1)),
+                            LottoNum(20, XY(2, 1)),
+                            LottoNum(34, XY(3, 1)),
+                            LottoNum(55, XY(5, 1)),
+                            LottoNum(73, XY(7, 1)),
 
-                        LottoNum(3, XY(2, 0)),
-                        LottoNum(24, XY(2, 2)),
-                        LottoNum(41, XY(2, 4)),
-                        LottoNum(66, XY(2, 6)),
-                        LottoNum(86, XY(2, 8)),
-                    )
+                            LottoNum(13, XY(1, row = 2)),
+                            LottoNum(28, XY(2, 2)),
+                            LottoNum(45, XY(4, 2)),
+                            LottoNum(67, XY(6, 2)),
+                            LottoNum(87, XY(8, 2)),
+                        )
 
-                ).asValidGrid())
+                    ).asValidGrid()
+                )
+
+                Lotto.game.addGrid(
+                    LottoGrid.fromNumbers(
+                        listOf(
+                            LottoNum(13, XY(1, 0)),
+                            LottoNum(37, XY(3, 0)),
+                            LottoNum(42, XY(4, 0)),
+                            LottoNum(68, XY(6, 0)),
+                            LottoNum(80, XY(8, 0)),
+
+
+                            LottoNum(2, XY(0, 1)),
+                            LottoNum(18, XY(1, 1)),
+                            LottoNum(49, XY(4, 1)),
+                            LottoNum(74, XY(7, 1)),
+                            LottoNum(83, XY(8, 1)),
+
+                            LottoNum(9, XY(0, row = 2)),
+                            LottoNum(29, XY(2, 2)),
+                            LottoNum(39, XY(3, 2)),
+                            LottoNum(59, XY(5, 2)),
+                            LottoNum(86, XY(8, 2)),
+                        )
+
+                    ).asValidGrid()
+                )
+
+                Lotto.game.addGrid(
+                    LottoGrid.fromNumbers(
+                        listOf(
+                            LottoNum(6, XY(0,0)),
+                            LottoNum(22, XY(2, 0)),
+                            LottoNum(31, XY(3, 0)),
+                            LottoNum(50, XY(5, 0)),
+                            LottoNum(70, XY(7, 0)),
+
+
+                            LottoNum(12, XY(1, 1)),
+                            LottoNum(34, XY(3, 1)),
+                            LottoNum(51, XY(5, 1)),
+                            LottoNum(62, XY(6, 1)),
+                            LottoNum(77, XY(7, 1)),
+
+                            LottoNum(14, XY(1, row = 2)),
+                            LottoNum(23, XY(2, 2)),
+                            LottoNum(44, XY(4, 2)),
+                            LottoNum(63, XY(6, 2)),
+                            LottoNum(88, XY(8, 2)),
+                        )
+
+                    ).asValidGrid()
+                )
+
+                Lotto.game.addGrid(
+                    LottoGrid.fromNumbers(
+                        listOf(
+                            LottoNum(11, XY(1,0)),
+                            LottoNum(36, XY(3, 0)),
+                            LottoNum(42, XY(4, 0)),
+                            LottoNum(64, XY(6, 0)),
+                            LottoNum(80, XY(8, 0)),
+
+
+                            LottoNum(9, XY(0, 1)),
+                            LottoNum(23, XY(2, 1)),
+                            LottoNum(39, XY(3, 1)),
+                            LottoNum(51, XY(5, 1)),
+                            LottoNum(77, XY(7, 1)),
+
+                            LottoNum(17, XY(1, row = 2)),
+                            LottoNum(28, XY(2, 2)),
+                            LottoNum(47, XY(4, 2)),
+                            LottoNum(65, XY(6, 2)),
+                            LottoNum(81, XY(8, 2)),
+                        )
+
+                    ).asValidGrid()
+                )
 
 //
 //                val recognizer = LottoGridRecognizer()

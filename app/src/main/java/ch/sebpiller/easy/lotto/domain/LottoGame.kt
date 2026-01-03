@@ -39,14 +39,20 @@ class LottoGame {
 
     }
 
-    fun pushNumber(number: Int) {
+    fun unregisterPickedNumber(number: Int) {
+        require(number in 1..90) { "number must be between 1 and 90" }
+
+        if (!pickedNumbers.remove(number)) {
+            System.err.println("the number $number was not in picked numbers !")
+        }
+    }
+
+    fun registerPickedNumber(number: Int) {
         require(number in 1..90) { "number must be between 1 and 90" }
 
         if (!pickedNumbers.add(number)) {
             System.err.println("the number $number has already been given !")
         }
-
-        return
     }
 
     // search for the most wanted number if one can make you win the game !
