@@ -1,4 +1,4 @@
-package ch.sebpiller.easy.lotto.model
+package ch.sebpiller.easy.lotto.domain
 
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -16,8 +16,8 @@ class LottoGridTest {
     fun test_grid() = runBlocking {
         val game = LottoGrid.fromNumbers(
             listOf(
-                LottoNumber(
-                    value = 1, position = NumberLocation(0, 0),
+                LottoNum(
+                    value = 1, position = XY(0, 0),
                 )
             )
         ).asValidGrid()

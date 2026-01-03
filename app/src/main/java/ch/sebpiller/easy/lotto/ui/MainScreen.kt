@@ -24,9 +24,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import ch.sebpiller.easy.lotto.model.Lotto
-import ch.sebpiller.easy.lotto.model.LottoGame
-import ch.sebpiller.easy.lotto.model.LottoGrid
+import ch.sebpiller.easy.lotto.domain.Lotto
+import ch.sebpiller.easy.lotto.domain.LottoGame
+import ch.sebpiller.easy.lotto.domain.LottoGrid
 import ch.sebpiller.easy.lotto.ocr.LottoGridRecognizer
 import ch.sebpiller.easy.lotto.ui.camera.CameraPreviewScreen
 import ch.sebpiller.easy.lotto.ui.camera.ImageCropperScreen
@@ -193,7 +193,7 @@ fun MainScreen(vm: LottoGameViewModel) {
         }
     ) { contentPadding ->
         Column(
-            modifier = Modifier.padding(contentPadding).padding(16.dp),
+            modifier = Modifier.padding(contentPadding),
         ) {
             vm.ui.collectAsState().value.grids.forEach {
                 LottoGridView(vm, it)

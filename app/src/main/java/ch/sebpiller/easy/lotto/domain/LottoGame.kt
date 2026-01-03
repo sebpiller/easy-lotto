@@ -1,4 +1,4 @@
-package ch.sebpiller.easy.lotto.model
+package ch.sebpiller.easy.lotto.domain
 
 class LottoGame {
     enum class GameStep(private val rowsToWin: Int, val label: String) {
@@ -6,7 +6,7 @@ class LottoGame {
         DQUINE(2, "XX"),
         CARTON(3, "XXX");
 
-        fun canBeWinWithRows(rowFull: Int): Boolean {
+        fun isWinWithRows(rowFull: Int): Boolean {
             return rowFull >= rowsToWin
         }
     }
@@ -79,7 +79,7 @@ class LottoGame {
                 }
             }
 
-            if (step.canBeWinWithRows(rowFull)) {
+            if (step.isWinWithRows(rowFull)) {
                 // you win !
                 return true
             }

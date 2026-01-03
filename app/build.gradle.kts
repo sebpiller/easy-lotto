@@ -5,7 +5,7 @@ plugins {
 }
 android {
     namespace = "ch.sebpiller.easy.lotto"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "ch.sebpiller.easy.lotto"

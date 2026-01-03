@@ -1,4 +1,4 @@
-package ch.sebpiller.easy.lotto.model
+package ch.sebpiller.easy.lotto.domain
 
 class Lotto {
     companion object {

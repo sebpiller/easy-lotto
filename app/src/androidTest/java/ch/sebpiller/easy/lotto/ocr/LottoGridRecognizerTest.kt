@@ -5,8 +5,8 @@ import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SmallTest
 import androidx.test.platform.app.InstrumentationRegistry
-import ch.sebpiller.easy.lotto.model.LottoGrid
-import ch.sebpiller.easy.lotto.model.LottoNumber
+import ch.sebpiller.easy.lotto.domain.LottoGrid
+import ch.sebpiller.easy.lotto.domain.LottoNum
 import com.google.mlkit.vision.common.InputImage
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert
@@ -144,7 +144,7 @@ internal class LottoGridRecognizerTest {
     }
 
     private fun assertFoundAt(
-        res: List<LottoNumber>,
+        res: List<LottoNum>,
         v: Int,
         r: Int,
         c: Int
@@ -160,7 +160,7 @@ internal class LottoGridRecognizerTest {
     }
 
 
-    private suspend fun recognizeCells(img: String): List<LottoNumber> {
+    private suspend fun recognizeCells(img: String): List<LottoNum> {
         val start = System.currentTimeMillis()
         val context = InstrumentationRegistry.getInstrumentation().context
         val imageStream = context.assets.open(img)

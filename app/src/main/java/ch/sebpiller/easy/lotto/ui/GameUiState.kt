@@ -1,6 +1,6 @@
 package ch.sebpiller.easy.lotto.ui
 
-import ch.sebpiller.easy.lotto.model.LottoGame
+import ch.sebpiller.easy.lotto.domain.LottoGame
 import ch.sebpiller.easy.lotto.ui.viewmodel.LottoGridViewModel
 
 data class GameUiState(

@@ -1,6 +1,7 @@
 package ch.sebpiller.easy.lotto.ui
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -31,7 +32,7 @@ fun StartMenu(function: () -> Unit) {
                             mode.value = "classical"
                             function()
                         },
-                        content = { Text("Classical") }
+                        content = { Text("Classical", autoSize = TextAutoSize.StepBased()) }
                     )
                 }
                 Row(
@@ -48,7 +49,7 @@ fun StartMenu(function: () -> Unit) {
                             mode.value = "expert"
                             function()
                         },
-                        content = { Text("Expert") }
+                        content = { Text("Expert", autoSize = TextAutoSize.StepBased()) }
                     )
                 }
             }

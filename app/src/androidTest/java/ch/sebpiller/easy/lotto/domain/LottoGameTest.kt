@@ -1,4 +1,4 @@
-package ch.sebpiller.easy.lotto.model
+package ch.sebpiller.easy.lotto.domain
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SmallTest
@@ -17,23 +17,23 @@ internal class LottoGameTest {
         val game = LottoGame()
         val grid = LottoGrid.fromNumbers(
             listOf(
-                LottoNumber(4, NumberLocation(0, 0)),
-                LottoNumber(12, NumberLocation(0, 1)),
-                LottoNumber(46, NumberLocation(0, 4)),
-                LottoNumber(51, NumberLocation(0, 5)),
-                LottoNumber(77, NumberLocation(0, 7)),
+                LottoNum(4, XY(0, 0)),
+                LottoNum(12, XY(0, 1)),
+                LottoNum(46, XY(0, 4)),
+                LottoNum(51, XY(0, 5)),
+                LottoNum(77, XY(0, 7)),
 
-                LottoNumber(10, NumberLocation(1, 1)),
-                LottoNumber(36, NumberLocation(1, 3)),
-                LottoNumber(57, NumberLocation(1, 5)),
-                LottoNumber(68, NumberLocation(1, 6)),
-                LottoNumber(80, NumberLocation(1, 8)),
+                LottoNum(10, XY(1, 1)),
+                LottoNum(36, XY(1, 3)),
+                LottoNum(57, XY(1, 5)),
+                LottoNum(68, XY(1, 6)),
+                LottoNum(80, XY(1, 8)),
 
-                LottoNumber(31, NumberLocation(2, 3)),
-                LottoNumber(48, NumberLocation(2, 4)),
-                LottoNumber(66, NumberLocation(2, 6)),
-                LottoNumber(74, NumberLocation(2, 7)),
-                LottoNumber(90, NumberLocation(2, 8)),
+                LottoNum(31, XY(2, 3)),
+                LottoNum(48, XY(2, 4)),
+                LottoNum(66, XY(2, 6)),
+                LottoNum(74, XY(2, 7)),
+                LottoNum(90, XY(2, 8)),
             )
         )
         grid.asValidGrid()

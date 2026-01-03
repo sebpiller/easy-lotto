@@ -1,6 +1,6 @@
 package ch.sebpiller.easy.lotto.stats
 
-import ch.sebpiller.easy.lotto.model.LottoGame
+import ch.sebpiller.easy.lotto.domain.LottoGame
 import java.util.*
 
 class LottoStatisticsRecorder {

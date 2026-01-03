@@ -1,8 +1,8 @@
 package ch.sebpiller.easy.lotto.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
-import ch.sebpiller.easy.lotto.model.Lotto
-import ch.sebpiller.easy.lotto.model.LottoGrid
+import ch.sebpiller.easy.lotto.domain.Lotto
+import ch.sebpiller.easy.lotto.domain.LottoGrid
 import ch.sebpiller.easy.lotto.ui.GameUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

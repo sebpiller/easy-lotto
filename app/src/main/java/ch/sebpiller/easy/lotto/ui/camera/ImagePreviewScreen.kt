@@ -11,7 +11,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.createBitmap
-import ch.sebpiller.easy.lotto.model.Lotto
+import ch.sebpiller.easy.lotto.domain.Lotto
 import ch.sebpiller.easy.lotto.ocr.ImagePreparator
 import ch.sebpiller.easy.lotto.ui.samples.LottoGridSamples
 import ch.sebpiller.easy.lotto.ui.viewmodel.LottoGameViewModel

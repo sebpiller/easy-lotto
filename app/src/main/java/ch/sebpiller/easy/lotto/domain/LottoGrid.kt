@@ -1,10 +1,10 @@
-package ch.sebpiller.easy.lotto.model
+package ch.sebpiller.easy.lotto.domain
 
 class LottoGrid(
-    val numbers: List<LottoNumber>
+    val numbers: List<LottoNum>
 ) {
     companion object {
-        fun fromNumbers(numbers: List<LottoNumber>): LottoGrid {
+        fun fromNumbers(numbers: List<LottoNum>): LottoGrid {
             return LottoGrid(numbers)
         }
     }
@@ -19,7 +19,7 @@ class LottoGrid(
 
         // 5 numbers on each row
         for (row in 0..2) {
-            var c = 0;
+            var c = 0
 
             for (col in 0..8) {
                 if (findAt(row, col) != null)
@@ -45,7 +45,7 @@ class LottoGrid(
         return this
     }
 
-    fun findAt(row: Int, col: Int): LottoNumber? {
+    fun findAt(row: Int, col: Int): LottoNum? {
         for (i in numbers) {
             if (i.position.col == col && i.position.row == row) return i
         }
