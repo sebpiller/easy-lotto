@@ -4,11 +4,11 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 android {
-    namespace = "ch.sebpiller.easy.lotto"
+    namespace = "ch.sebpiller.easy.loto"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "ch.sebpiller.easy.lotto"
+        applicationId = "ch.sebpiller.easy.loto"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
