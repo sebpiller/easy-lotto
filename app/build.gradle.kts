@@ -1,3 +1,4 @@
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -19,13 +20,30 @@ android {
         vectorDrawables { useSupportLibrary = true }
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file(System.getenv("RELEASE_STORE_FILE") ?: error("RELEASE_STORE_FILE environment variable not set"))
+            keyAlias = System.getenv("RELEASE_KEY_ALIAS") ?: error("RELEASE_KEY_ALIAS environment variable not set")
+            storePassword = System.getenv("RELEASE_STORE_PASSWORD")?: error("RELEASE_STORE_PASSWORD environment variable not set")
+            keyPassword = System.getenv("RELEASE_KEY_PASSWORD") ?: error("RELEASE_KEY_PASSWORD environment variable not set")
+
+            storeType = "JKS"
+            enableV1Signing = false  // Only if targeting Android 9+
+            enableV2Signing = true
+        }
+    }
+
     buildTypes {
-        release {
+
+        debug {
+            isMinifyEnabled = false
+            isDebuggable = true
+        }
+
+        getByName("release") {
             isMinifyEnabled = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 
@@ -54,7 +72,7 @@ android {
 }
 
 dependencies {
-    implementation("androidx.compose.runtime:runtime:1.10.0")
+    implementation("androidx.compose.runtime:runtime:1.10.1")
     val composeBom = platform("androidx.compose:compose-bom:2025.11.01")
     implementation(composeBom)
     androidTestImplementation(composeBom)

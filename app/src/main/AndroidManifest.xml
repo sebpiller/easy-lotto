@@ -6,10 +6,8 @@
     <uses-feature android:name="android.hardware.camera.any" android:required="false"/>
 
     <application
-            android:allowBackup="true"
-            android:icon="@android:drawable/sym_def_app_icon"
+            android:icon="@mipmap/ic_launcher"
             android:label="@string/app_name"
-            android:supportsRtl="true"
             android:theme="@style/Theme.EasyLoto">
         <activity
                 android:name="ch.sebpiller.easy.loto.MainActivity"
