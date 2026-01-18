@@ -10,8 +10,9 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.lifecycle.awaitInstance
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FlipCameraAndroid
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,6 +22,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import ch.sebpiller.easy.loto.domain.Loto
+import ch.sebpiller.easy.loto.ui.samples.LotoGridSamples
+import ch.sebpiller.easy.loto.ui.viewmodel.LotoGameViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -71,17 +75,17 @@ fun CameraPreviewContent(
     imageCaptureUseCase: UseCase? = null
 ) {
 
-
+    var lensFacing by remember { mutableIntStateOf(CameraSelector.LENS_FACING_BACK) }
     val previewUseCase = remember { Preview.Builder().build() }
 
     var cameraProvider by remember { mutableStateOf<ProcessCameraProvider?>(null) }
 
 
-    fun rebindCameraProvider(imageCaptureUseCase: UseCase?) {
+    fun rebindCameraProvider(imageCaptureUseCase: UseCase?, cameraLensFacing: Int) {
         cameraProvider?.unbindAll()
 
         val cameraSelector = CameraSelector.Builder()
-            .requireLensFacing(CameraSelector.LENS_FACING_FRONT)
+            .requireLensFacing(cameraLensFacing)
             .build()
 
         cameraProvider?.bindToLifecycle(
@@ -94,16 +98,55 @@ fun CameraPreviewContent(
 
     LaunchedEffect(Unit) {
         cameraProvider = ProcessCameraProvider.awaitInstance(localContext)
-        rebindCameraProvider(imageCaptureUseCase)
+        rebindCameraProvider(imageCaptureUseCase, lensFacing)
     }
 
-    AndroidView(
-        modifier = modifier.fillMaxSize(0.8f),
-        factory = { context ->
-            PreviewView(context).also {
-                previewUseCase.surfaceProvider = it.surfaceProvider
-                rebindCameraProvider(imageCaptureUseCase)
+    LaunchedEffect(lensFacing) {
+        rebindCameraProvider(imageCaptureUseCase, lensFacing)
+    }
+
+    Box(modifier = modifier) {
+        AndroidView(
+            modifier = Modifier.fillMaxSize(0.8f),
+            factory = { context ->
+                PreviewView(context).also {
+                    previewUseCase.surfaceProvider = it.surfaceProvider
+                    rebindCameraProvider(imageCaptureUseCase, lensFacing)
+                }
             }
+        )
+
+        IconButton(
+            onClick = {
+                lensFacing = if (lensFacing == CameraSelector.LENS_FACING_BACK) {
+                    CameraSelector.LENS_FACING_FRONT
+                } else {
+                    CameraSelector.LENS_FACING_BACK
+                }
+            },
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(16.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Filled.FlipCameraAndroid,
+                contentDescription = "Switch Camera"
+            )
         }
-    )
+    }
+}
+
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+fun CameraPreviewScreenPreview() {
+    val game = LotoGameViewModel()
+    Loto.game.addGrid(LotoGridSamples.SAMPLE1)
+    game.reloadGrids()
+
+    Surface {
+        CameraPreviewScreen(
+            imageCapture = ImageCapture.Builder().build()
+        )
+    }
 }

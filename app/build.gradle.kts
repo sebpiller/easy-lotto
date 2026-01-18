@@ -1,4 +1,3 @@
-
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -21,16 +20,19 @@ android {
     }
 
     signingConfigs {
-        create("release") {
-            storeFile = file(System.getenv("RELEASE_STORE_FILE") ?: error("RELEASE_STORE_FILE environment variable not set"))
-            keyAlias = System.getenv("RELEASE_KEY_ALIAS") ?: error("RELEASE_KEY_ALIAS environment variable not set")
-            storePassword = System.getenv("RELEASE_STORE_PASSWORD")?: error("RELEASE_STORE_PASSWORD environment variable not set")
-            keyPassword = System.getenv("RELEASE_KEY_PASSWORD") ?: error("RELEASE_KEY_PASSWORD environment variable not set")
-
-            storeType = "JKS"
-            enableV1Signing = false  // Only if targeting Android 9+
-            enableV2Signing = true
-        }
+//        create("release") {
+//            storeFile =
+//                file(System.getenv("RELEASE_STORE_FILE") ?: error("RELEASE_STORE_FILE environment variable not set"))
+//            keyAlias = System.getenv("RELEASE_KEY_ALIAS") ?: error("RELEASE_KEY_ALIAS environment variable not set")
+//            storePassword =
+//                System.getenv("RELEASE_STORE_PASSWORD") ?: error("RELEASE_STORE_PASSWORD environment variable not set")
+//            keyPassword =
+//                System.getenv("RELEASE_KEY_PASSWORD") ?: error("RELEASE_KEY_PASSWORD environment variable not set")
+//
+//            storeType = "JKS"
+//            enableV1Signing = false  // Only if targeting Android 9+
+//            enableV2Signing = true
+//        }
     }
 
     buildTypes {
@@ -43,7 +45,7 @@ android {
         getByName("release") {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            signingConfig = signingConfigs.getByName("release")
+      //      signingConfig = signingConfigs.getByName("release")
         }
     }
 
@@ -88,6 +90,10 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     debugImplementation("androidx.compose.ui:ui-tooling")
     implementation("androidx.compose.material3:material3:1.4.0")
+    implementation("androidx.compose.material3:material3-window-size-class:1.4.0")
+    implementation("androidx.compose.material:material-icons-extended:1.7.8")
+    implementation("androidx.compose.material3:material3-adaptive-navigation-suite:1.5.0-alpha12")
+
 
     // CameraX
     val cameraxVersion = "1.5.2"
