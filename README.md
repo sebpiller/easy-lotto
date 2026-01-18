@@ -31,10 +31,11 @@ waydroid app launch ch.sebpiller.easy.loto
 ## Release
 
 ```shell
-keytool -genkeypair -v -keystore ~/spich/spich-playstore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias easyloto -storepass 8fmx4h1dVFBo3uENY77v -keypass 8fmx4h1dVFBo3uENY77v
-```
+keytool -genkeypair -v -keystore ~/spich/spich-playstore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias easyloto -storepass $KEYPASS -keypass $KEYPASS
+````
 
 ---
+
 
 ### Easy Loto — Android camera app module
 

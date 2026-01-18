@@ -4,9 +4,9 @@
       <option name="env">
         <map>
           <entry key="RELEASE_STORE_FILE" value="$USER_HOME$/spich/spich-playstore.jks" />
-          <entry key="RELEASE_STORE_PASSWORD" value="8fmx4h1dVFBo3uENY77v" />
+          <entry key="RELEASE_STORE_PASSWORD" value="xxx" />
           <entry key="RELEASE_KEY_ALIAS" value="easyloto" />
-          <entry key="RELEASE_KEY_PASSWORD" value="8fmx4h1dVFBo3uENY77v" />
+          <entry key="RELEASE_KEY_PASSWORD" value="xxx" />
         </map>
       </option>
       <option name="executionName" />
