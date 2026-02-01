@@ -21,28 +21,12 @@ fun ImagePreviewScreen(
     originalImage: Bitmap,
     croppedImage: Bitmap,
     onConfirm: (preparedImage: Bitmap) -> Unit,
-    onRetry: () -> Unit,
-    modifier: Modifier
+    onRetry: () -> Unit
 ) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     val tabs = listOf("Original", "Cropped", "Preprocessed")
     val imagePreparator = remember { ImagePreparator() }
 
-    Box(modifier = Modifier.height(120.dp).padding(bottom = 60.dp).fillMaxWidth()) {
-        Row {
-            Button(
-                onClick = onRetry,
-            ) {
-                Text("Cancel")
-            }
-
-            Button(
-                onClick = { onConfirm(ImagePreparator().preprocessImage(croppedImage)) },
-            ) {
-                Text("Import")
-            }
-        }
-    }
 
     SecondaryTabRow(
         selectedTabIndex,
@@ -94,6 +78,20 @@ fun ImagePreviewScreen(
                 )
             }
 
+        }
+
+        Row {
+            Button(
+                onClick = onRetry,
+            ) {
+                Text("Cancel")
+            }
+
+            Button(
+                onClick = { onConfirm(ImagePreparator().preprocessImage(croppedImage)) },
+            ) {
+                Text("Import")
+            }
         }
 
 
@@ -173,8 +171,7 @@ fun ImagePreviewScreenPreview() {
             createBitmap(100, 100),
 
             {},
-            {},
-            Modifier
+            {}
         )
     }
 }

@@ -1,6 +1,7 @@
 package ch.sebpiller.easy.loto.ui
 
 import android.graphics.Bitmap
+import android.graphics.Matrix
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.ImageProxy
@@ -9,6 +10,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -203,11 +205,17 @@ fun MainScreen(vm: LotoGameViewModel) {
             }
         }
 
+
         // Caméra
         if (showScanner.value && !showCropper.value && !showPreview.value) {
-            val imageCaptureUseCase = remember { ImageCapture.Builder().build() }
+            val imageCaptureUseCase = remember {
+                ImageCapture.Builder()
+                    .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
+                    .setFlashMode(ImageCapture.FLASH_MODE_AUTO)
+                    .build()
+            }
 
-            Column(modifier = Modifier.fillMaxWidth().aspectRatio(4f / 3)) {
+            Column(modifier = Modifier.padding(contentPadding).background(Color.White)) {
                 CameraPreviewScreen(
                     modifier = Modifier.align(Alignment.CenterHorizontally),
                     imageCapture = imageCaptureUseCase
@@ -236,7 +244,6 @@ fun MainScreen(vm: LotoGameViewModel) {
 
         // Recadrage
         if (showCropper.value && capturedBitmap.value != null) {
-
             ImageCropperScreen(
                 modifier = Modifier.fillMaxWidth(),
                 bitmap = capturedBitmap.value!!,
@@ -252,18 +259,14 @@ fun MainScreen(vm: LotoGameViewModel) {
                 },
             )
         }
-    }
 
-    // Prévisualisation
-    if (showPreview.value && croppedBitmap.value != null) {
-        Column(modifier = Modifier.fillMaxWidth().aspectRatio(4f / 3)) {
 
+        // Prévisualisation
+        if (showPreview.value && croppedBitmap.value != null) {
             ImagePreviewScreen(
-                modifier = Modifier.align(Alignment.CenterHorizontally).fillMaxSize(),
                 originalImage = capturedBitmap.value!!,
                 croppedImage = croppedBitmap.value!!,
                 onConfirm = {
-
                     scope.async {
                         // Add sample test data
                         val detectedGrid = LotoGridRecognizer().extractAllNumbers(InputImage.fromBitmap(it, 0))
@@ -286,6 +289,12 @@ fun MainScreen(vm: LotoGameViewModel) {
             )
         }
     }
+}
+
+private fun rotateBitmap(bitmap: Bitmap, rotationDegrees: Int): Bitmap {
+    if (rotationDegrees == 0) return bitmap
+    val matrix = Matrix().apply { postRotate(rotationDegrees.toFloat()) }
+    return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
 }
 
 

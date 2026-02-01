@@ -47,7 +47,7 @@ fun LotoGridView(
 
             Card(
                 modifier = Modifier
-                    .aspectRatio(0.8f)
+                    .aspectRatio(0.85f)
                     .padding(1.dp)
                     .border(1.dp, Color.Black, RoundedCornerShape(4.dp)),
                 colors = CardDefaults.cardColors(

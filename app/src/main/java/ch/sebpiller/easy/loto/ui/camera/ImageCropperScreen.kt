@@ -128,10 +128,10 @@ fun ImageCropperScreen(
                 )
 
                 // Overlay semi-transparent en dehors de la zone
-                drawRect(
-                    color = Color.Black.copy(alpha = 0.6f),
-                    size = size
-                )
+//                drawRect(
+//                    color = Color.Black.copy(alpha = 0.6f),
+//                    size = size
+//                )
 
                 // Découpe transparente
                 drawRect(

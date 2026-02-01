@@ -33,7 +33,6 @@ import com.google.accompanist.permissions.shouldShowRationale
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun CameraPreviewScreen(
-
     modifier: Modifier = Modifier,
     imageCapture: ImageCapture
 ) {
@@ -105,9 +104,9 @@ fun CameraPreviewContent(
         rebindCameraProvider(imageCaptureUseCase, lensFacing)
     }
 
-    Box(modifier = modifier) {
+    Box(modifier = modifier.aspectRatio(4f / 3)) {
         AndroidView(
-            modifier = Modifier.fillMaxSize(0.8f),
+            modifier = Modifier.fillMaxSize(0.8f).align(Alignment.Center),
             factory = { context ->
                 PreviewView(context).also {
                     previewUseCase.surfaceProvider = it.surfaceProvider
@@ -124,9 +123,6 @@ fun CameraPreviewContent(
                     CameraSelector.LENS_FACING_BACK
                 }
             },
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(16.dp)
         ) {
             Icon(
                 imageVector = Icons.Filled.FlipCameraAndroid,
@@ -146,7 +142,10 @@ fun CameraPreviewScreenPreview() {
 
     Surface {
         CameraPreviewScreen(
-            imageCapture = ImageCapture.Builder().build()
+            imageCapture = ImageCapture.Builder()
+                .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
+                .setFlashMode(ImageCapture.FLASH_MODE_AUTO)
+                .build()
         )
     }
 }
