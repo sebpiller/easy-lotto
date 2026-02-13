@@ -6,6 +6,7 @@ import ch.sebpiller.easy.loto.domain.XY
 
 class LotoGridSamples {
     companion object {
+
         val SAMPLE1 = LotoGrid.fromNumbers(
             listOf(
                 // Row 0

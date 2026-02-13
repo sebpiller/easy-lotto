@@ -74,13 +74,13 @@ android {
 }
 
 dependencies {
-    implementation("androidx.compose.runtime:runtime:1.10.1")
+    implementation("androidx.compose.runtime:runtime:1.10.3")
     val composeBom = platform("androidx.compose:compose-bom:2025.11.01")
     implementation(composeBom)
     androidTestImplementation(composeBom)
 
     implementation("androidx.core:core-ktx:1.17.0")
-    implementation("androidx.activity:activity-compose:1.12.2")
+    implementation("androidx.activity:activity-compose:1.12.4")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.10.0")
 
     //   implementation("libs.accompanist.permissions")
@@ -92,7 +92,7 @@ dependencies {
     implementation("androidx.compose.material3:material3:1.4.0")
     implementation("androidx.compose.material3:material3-window-size-class:1.4.0")
     implementation("androidx.compose.material:material-icons-extended:1.7.8")
-    implementation("androidx.compose.material3:material3-adaptive-navigation-suite:1.5.0-alpha12")
+    implementation("androidx.compose.material3:material3-adaptive-navigation-suite:1.5.0-alpha14")
 
 
     // CameraX
