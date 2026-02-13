@@ -1,5 +1,6 @@
 package ch.sebpiller.easy.loto.ui
 
+import android.app.Activity
 import android.graphics.Bitmap
 import android.graphics.Matrix
 import androidx.camera.core.ImageCapture
@@ -38,13 +39,13 @@ import ch.sebpiller.easy.loto.ui.tools.ConfirmDialog
 import ch.sebpiller.easy.loto.ui.viewmodel.LotoGameViewModel
 import com.google.mlkit.vision.common.InputImage
 import kotlinx.coroutines.async
-import kotlin.system.exitProcess
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(vm: LotoGameViewModel) {
     val scope = rememberCoroutineScope()
+    val showAddGrid = remember { mutableStateOf(false) }
     val showScanner = remember { mutableStateOf(false) }
     val capturedBitmap = remember { mutableStateOf<Bitmap?>(null) }
     val croppedBitmap = remember { mutableStateOf<Bitmap?>(null) }
@@ -90,7 +91,9 @@ fun MainScreen(vm: LotoGameViewModel) {
             BottomAppBar(
                 modifier = Modifier.height(IntrinsicSize.Min),
                 actions = {
-                    Row(modifier = Modifier.fillMaxHeight().fillMaxWidth(0.85f)) {
+                    Row(modifier = Modifier
+                        .fillMaxHeight()
+                        .fillMaxWidth(0.85f)) {
                         Column(modifier = Modifier.weight(1f)) {
                             Row {
                                 RadioButton(ui.step == LotoGame.GameStep.QUINE, {})
@@ -170,6 +173,10 @@ fun MainScreen(vm: LotoGameViewModel) {
                         Surface {
                             Column {
                                 Button(onClick = {
+                                    showAddGrid.value = true
+                                }) { Text("Add new grid") }
+
+                                Button(onClick = {
                                     showScanner.value = true
                                 }) { Text("Scan new grid") }
 
@@ -184,7 +191,7 @@ fun MainScreen(vm: LotoGameViewModel) {
 
                                 Button(onClick = {
                                     ifConfirm("Quit ?", "We will miss you !") {
-                                        exitProcess(0)
+                                        (localContext as Activity).finish()
                                     }
                                 }) { Text("Quit") }
                             }
@@ -205,6 +212,15 @@ fun MainScreen(vm: LotoGameViewModel) {
             }
         }
 
+        if(showAddGrid.value) {
+            Column(modifier = Modifier.padding(contentPadding)) {
+                LotoGridEditor(initialGrid = LotoGridSamples.SAMPLE1) {
+                    showAddGrid.value = false
+                    vm.addGrid(it!!)
+                }
+            }
+        }
+
 
         // Caméra
         if (showScanner.value && !showCropper.value && !showPreview.value) {
@@ -215,12 +231,16 @@ fun MainScreen(vm: LotoGameViewModel) {
                     .build()
             }
 
-            Column(modifier = Modifier.padding(contentPadding).background(Color.White)) {
+            Column(modifier = Modifier
+                .padding(contentPadding)
+                .background(Color.White)) {
                 CameraPreviewScreen(
                     modifier = Modifier.align(Alignment.CenterHorizontally),
                     imageCapture = imageCaptureUseCase
                 )
-                Row(modifier = Modifier.fillMaxWidth().align(Alignment.CenterHorizontally)) {
+                Row(modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.CenterHorizontally)) {
                     Button(onClick = { showScanner.value = false }) { Text("Annuler") }
                     Button(onClick = {
                         val callback = object : ImageCapture.OnImageCapturedCallback() {
@@ -264,6 +284,7 @@ fun MainScreen(vm: LotoGameViewModel) {
         // Prévisualisation
         if (showPreview.value && croppedBitmap.value != null) {
             ImagePreviewScreen(
+                modifier = Modifier.fillMaxWidth().padding(contentPadding),
                 originalImage = capturedBitmap.value!!,
                 croppedImage = croppedBitmap.value!!,
                 onConfirm = {

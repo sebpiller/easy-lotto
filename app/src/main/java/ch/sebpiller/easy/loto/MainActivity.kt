@@ -27,7 +27,7 @@ import kotlinx.coroutines.async
 
 class MainActivity : ComponentActivity() {
 
-    val mode = "dev"
+    val mode = "!dev"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val loading = mutableStateOf(false)

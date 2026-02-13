@@ -75,7 +75,8 @@ fun ImageCropperScreen(
                 bitmap = bitmap.asImageBitmap(),
                 contentDescription = "Image à recadrer",
                 modifier = modifier
-                    .fillMaxWidth().aspectRatio(4f / 3)
+                    .fillMaxWidth()
+                    .aspectRatio(4f / 3)
                     .pointerInput(Unit) {
                         detectDragGestures { change, dragAmount ->
                             change.consume()
@@ -118,7 +119,8 @@ fun ImageCropperScreen(
             // Overlay de recadrage
             Canvas(
                 modifier = Modifier
-                    .fillMaxWidth().aspectRatio(4f / 3)
+                    .fillMaxWidth()
+                    .aspectRatio(4f / 3)
             ) {
                 val cropRectPx = Rect(
                     left = cropRect.left * size.width,

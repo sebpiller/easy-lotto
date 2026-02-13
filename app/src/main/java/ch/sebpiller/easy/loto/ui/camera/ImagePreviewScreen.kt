@@ -8,7 +8,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -29,75 +28,72 @@ fun ImagePreviewScreen(
     val imagePreparator = remember { ImagePreparator() }
 
 
-        SecondaryTabRow(
-            selectedTabIndex = selectedTabIndex,
-            tabs = {
-                tabs.forEachIndexed { index, title ->
-                    Tab(
-                        selected = selectedTabIndex == index,
-                        onClick = { selectedTabIndex = index },
-                        text = { Text(title) }
-                    )
-                }
+    SecondaryTabRow (
+        modifier = modifier,
+        selectedTabIndex = selectedTabIndex,
+        tabs = {
+            tabs.forEachIndexed { index, title ->
+                Tab(
+                    selected = selectedTabIndex == index,
+                    onClick = { selectedTabIndex = index },
+                    text = { Text(title) }
+                )
             }
-        )
+        }
+    )
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(4f / 3),
-        ) {
-            when (selectedTabIndex) {
-                0 -> {
-                    // Original image
-                    Image(
-                        bitmap = originalImage.asImageBitmap(),
-                        contentDescription = "Original image",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Inside
-                    )
-                }
 
-                1 -> {
-                    // Prepared image (resized & contrast enhanced)
-                    Image(
-                        bitmap = croppedImage.asImageBitmap(),
-                        contentDescription = "Cropped image",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Inside
-                    )
-                }
-
-                2 -> {
-                    // Extracted image (final processed)
-                    Image(
-                        bitmap = imagePreparator.preprocessImage(croppedImage).asImageBitmap(),
-                        contentDescription = "Processed image",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Inside
-                    )
-                }
-
+        when (selectedTabIndex) {
+            0 -> {
+                // Original image
+                Image(
+                    bitmap = originalImage.asImageBitmap(),
+                    contentDescription = "Original image",
+                    modifier = modifier.paddingFromBaseline(top = 50.dp).fillMaxWidth().aspectRatio(4f / 3),
+                    contentScale = ContentScale.Fit
+                )
             }
 
-            Row(
-            ) {
-                Button(
-                    onClick = onRetry,
-                    modifier = Modifier.weight(1f).padding(end = 8.dp)
-                ) {
-                    Text("Cancel")
-                }
+            1 -> {
+                // Prepared image (resized & contrast enhanced)
+                Image(
+                    bitmap = croppedImage.asImageBitmap(),
+                    contentDescription = "Cropped image",
+                    modifier = modifier.paddingFromBaseline(top = 50.dp).fillMaxWidth().aspectRatio(4f / 3),
+                    contentScale = ContentScale.Fit
+                )
+            }
 
-                Button(
-                    onClick = { onConfirm(ImagePreparator().preprocessImage(croppedImage)) },
-                    modifier = Modifier.weight(1f).padding(start = 8.dp)
-                ) {
-                    Text("Import")
-                }
+            2 -> {
+                // Extracted image (final processed)
+                Image(
+                    bitmap = imagePreparator.preprocessImage(croppedImage).asImageBitmap(),
+                    contentDescription = "Processed image",
+                    modifier = modifier.paddingFromBaseline(top = 50.dp).fillMaxWidth().aspectRatio(4f / 3),
+                    contentScale = ContentScale.Fit
+                )
             }
 
         }
+
+
+    Row(modifier = modifier.paddingFromBaseline(top = 300.dp, bottom = 32.dp)) {
+
+            Button(
+                onClick = onRetry,
+            ) {
+                Text("Cancel")
+            }
+
+            Button(
+                onClick = { onConfirm(ImagePreparator().preprocessImage(croppedImage)) },
+
+            ) {
+                Text("Import")
+            }
+            }
+
+
 
 //            // Detection info
 //            if (detectedGrid != null) {
@@ -156,14 +152,16 @@ fun ImagePreviewScreen(
 //            }
 
 
-    }
+}
 
 @Preview(apiLevel = 35)
 @Composable
 fun ImagePreviewScreenPreview() {
 
-    val x = LocalContext.current.assets.open("loto_grid.webp").use { inputStream -> BitmapFactory.decodeStream(inputStream)}
-    val y = LocalContext.current.assets.open("loto_grid3.jpg").use { inputStream -> BitmapFactory.decodeStream(inputStream)}
+    val x = LocalContext.current.assets.open("loto_grid.webp")
+        .use { inputStream -> BitmapFactory.decodeStream(inputStream) }
+    val y = LocalContext.current.assets.open("loto_grid3.jpg")
+        .use { inputStream -> BitmapFactory.decodeStream(inputStream) }
 
     Surface {
         ImagePreviewScreen(

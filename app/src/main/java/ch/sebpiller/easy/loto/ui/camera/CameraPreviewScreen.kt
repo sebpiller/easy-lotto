@@ -41,7 +41,10 @@ fun CameraPreviewScreen(
         CameraPreviewContent(modifier, imageCaptureUseCase = imageCapture)
     } else {
         Column(
-            modifier = modifier.fillMaxSize().wrapContentSize().widthIn(max = 480.dp),
+            modifier = modifier
+                .fillMaxSize()
+                .wrapContentSize()
+                .widthIn(max = 480.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             val textToShow = if (cameraPermissionState.status.shouldShowRationale) {
@@ -106,7 +109,9 @@ fun CameraPreviewContent(
 
     Box(modifier = modifier.aspectRatio(4f / 3)) {
         AndroidView(
-            modifier = Modifier.fillMaxSize(0.8f).align(Alignment.Center),
+            modifier = Modifier
+                .fillMaxSize(0.8f)
+                .align(Alignment.Center),
             factory = { context ->
                 PreviewView(context).also {
                     previewUseCase.surfaceProvider = it.surfaceProvider
